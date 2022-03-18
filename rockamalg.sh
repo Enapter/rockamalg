@@ -7,7 +7,7 @@ function __usage() {
 Usage rockamalg [args...] <fw.lua|fw_dir>
 
 Description:
-    rockamalg amalgates lua files with all dependencies inside one lua file.
+    rockamalg amalgamates lua files with all dependencies inside one lua file.
 
 Args:
     --rockspec|-r - use rockspec file name
@@ -21,13 +21,13 @@ Examples:
     rockamalg -o out.lua -d deps firmware.lua
 
 Dependencies file
-    The dependencies should be multilien file in rockspec format.
-    Every line may have coma or not. Lua version should not be specified.
+    The dependencies should be multiline file in rockspec format.
+    Note, that Lua version should not be specified and commas and quotes are omitted.
 
     Example:
-        'lua-string ~> 1.2'
-        'inspect ~> 3.1.2'
-        'beemovie'
+        lua-string ~> 1.2
+        inspect ~> 3.1.2
+        beemovie
 
 EOF
 }
@@ -65,7 +65,7 @@ source = {
 dependencies = {
     'lua ~> 5.3',
 EOF
-        sed -e '/^$/d' -e 's/,$//' -e 's/$/,/' "${deps}"
+        sed -e '/^$/d' -e "s/^/'/" -e "s/$/',/" "${deps}"
         echo "}"
     } >> "$rockspec"
 }
