@@ -67,7 +67,7 @@ dependencies = {
 EOF
         sed -e '/^$/d' -e "s/^/'/" -e "s/$/',/" "${deps}"
         echo "}"
-    } >> "$rockspec"
+    } > "$rockspec"
 }
 
 function main() {
@@ -102,7 +102,6 @@ function main() {
         shift
     done
 
-    [[ -z "${rockspec}" ]] && [[ -z "${deps}" ]] && usage_with_error "rockspec or deps are required"
     [[ -n "${rockspec}" ]] && [[ -n "${deps}" ]] && usage_with_error "rockspec or deps are not allowed simultaneously"
     [[ -z "${output}" ]] && usage_with_error "output filename is required"
     [[ -z "${firmware}" ]] && usage_with_error "input firmware is required"
@@ -116,10 +115,11 @@ function main() {
         echo "Done"
     fi
 
-    echo -n "Installing dependencies... "
-    luarocks install --only-deps "$rockspec" > /dev/null
-    echo "Done"
-
+    if [[ -n "${rockspec}" ]]; then
+        echo -n "Installing dependencies... "
+        luarocks install --only-deps "$rockspec" > /dev/null
+        echo "Done"
+    fi
 
     echo -n "Calculating requires... "
     local modules=""
