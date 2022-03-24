@@ -23,7 +23,7 @@ Note, that Lua version should not be specified and commas and quotes are omitted
 
 Save this into file (e.g. `deps`) and you can amalgamate your `firmware.lua` with all dependencies via command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg -o out.lua -d deps firmware.lua
+docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -d deps firmware.lua
 ```
 
 ### Rockspec
@@ -48,7 +48,7 @@ This file should have a specific name `generated-dev-1.rockspec`. The parts of n
 
 After that you can amalgamate your `firmware.lua` with all dependencies via command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg -o out.lua -r my.rockspec firmware.lua
+docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -r my.rockspec firmware.lua
 ```
 
 ### Firmware directory
@@ -57,5 +57,5 @@ You can split `firmware.lua` into multiple files and use Lua modules as usual. T
 
 E.g. your firmware is placed in `firmware_dir`. So you can amalgamate your firmware by the following command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg -o out.lua -d deps firmware_dir
+docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -d deps firmware_dir
 ```
