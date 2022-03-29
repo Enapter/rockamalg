@@ -84,18 +84,25 @@ func (a *amalg) Do(ctx context.Context) error {
 		return fmt.Errorf("calculate requires: %w", err)
 	}
 
-	fwIsDir, err := isDirectory(a.p.Firmware)
-	if err != nil {
-		return fmt.Errorf("checking firmware is directory: %w", err)
-	}
-
-	if fwIsDir {
+	if !filepath.IsAbs(a.p.Output) {
 		curDir, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("getting current directory: %w", err)
 		}
 		a.p.Output = filepath.Join(curDir, a.p.Output)
+	}
 
+	fwIsDir, err := isDirectory(a.p.Firmware)
+	if err != nil {
+		return fmt.Errorf("checking firmware is directory: %w", err)
+	}
+
+	if !fwIsDir {
+		if err := os.Chdir(filepath.Dir(a.p.Firmware)); err != nil {
+			return fmt.Errorf("chdir: %w", err)
+		}
+		a.p.Firmware = filepath.Base(a.p.Firmware)
+	} else {
 		if err := os.Chdir(a.p.Firmware); err != nil {
 			return fmt.Errorf("chdir: %w", err)
 		}

@@ -627,5 +627,5 @@ inspect = require \"inspect\"\
 \
 local v = (\"Hello world!\"):trimend(\"!\"):sub(6):trim():totable()\
 print(inspect(v))\
-", '@'.."testdata/amalg/single_file_with_rockspec/single.lua" ) )( ... )
+", '@'.."single.lua" ) )( ... )
 
