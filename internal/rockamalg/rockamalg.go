@@ -57,6 +57,8 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 	}
 
 	a := amalg{p: p, rockspecTmpl: r.rockspecTmpl}
+	defer a.cleanup()
+
 	return a.Do(ctx)
 }
 
@@ -64,11 +66,11 @@ type amalg struct {
 	p            Params
 	modules      []string
 	rockspecTmpl *template.Template
+	cleanupFns   []func()
 }
 
 func (a *amalg) Do(ctx context.Context) error {
 	if a.p.Dependencies != "" {
-		defer os.RemoveAll(filepath.Dir(a.p.Rockspec))
 		if err := a.wrapWithMsg(a.generateRockspec, "Generating rockspec")(ctx); err != nil {
 			return fmt.Errorf("generate rockspec: %w", err)
 		}
@@ -136,10 +138,11 @@ func (a *amalg) generateRockspec(context.Context) error {
 		}
 	}
 
-	tmpDir, err := os.MkdirTemp("/tmp", "rockamalg")
+	tmpDir, err := os.MkdirTemp("/tmp", "genrockspec")
 	if err != nil {
 		return fmt.Errorf("mkdir temp: %w", err)
 	}
+	a.cleanupFns = append(a.cleanupFns, func() { os.RemoveAll(tmpDir) })
 
 	a.p.Rockspec = filepath.Join(tmpDir, "generated-dev-1.rockspec")
 	rf, err := os.Create(a.p.Rockspec)
@@ -268,6 +271,12 @@ func (a *amalg) wrapWithMsg(fn func(context.Context) error, msg string) func(con
 		}
 		fmt.Fprintln(a.p.Writer, "Done")
 		return nil
+	}
+}
+
+func (a *amalg) cleanup() {
+	for _, fn := range a.cleanupFns {
+		fn()
 	}
 }
 
