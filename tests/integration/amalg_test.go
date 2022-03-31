@@ -36,12 +36,15 @@ func TestAmalgCommand(t *testing.T) {
 }
 
 type testOpts struct {
-	outLuaFileName  string
-	amalgArgs       []string
-	luaExecArgs     []string
-	expectedStdout  string
-	expectedLua     string
-	expectedLuaExec string
+	outLuaFileName   string
+	amalgArgs        []string
+	luaExecArgs      []string
+	expectedStdout   string
+	expectedLua      string
+	expectedLuaExec  string
+	firmwarePath     string
+	depsFileName     string
+	rockspecFileName string
 }
 
 func buildTestOpts(t *testing.T, name string) testOpts {
@@ -71,11 +74,15 @@ func buildTestOpts(t *testing.T, name string) testOpts {
 	depsFileName := filepath.Join(testdataPath, "deps")
 	if isExist(t, depsFileName) {
 		amalgArgs = append(amalgArgs, "-d", depsFileName)
+	} else {
+		depsFileName = ""
 	}
 
 	rockspecFileName := filepath.Join(testdataPath, name+"-dev-1.rockspec")
 	if isExist(t, rockspecFileName) {
 		amalgArgs = append(amalgArgs, "-r", rockspecFileName)
+	} else {
+		rockspecFileName = ""
 	}
 
 	amalgArgs = append(amalgArgs, filepath.Join(testdataPath, firmwareName))
@@ -87,12 +94,15 @@ func buildTestOpts(t *testing.T, name string) testOpts {
 	}
 
 	return testOpts{
-		amalgArgs:       amalgArgs,
-		luaExecArgs:     luaExecArgs,
-		outLuaFileName:  outLuaFile.Name(),
-		expectedStdout:  filepath.Join(testdataPath, "stdout"),
-		expectedLua:     exepctedLuaFileName,
-		expectedLuaExec: filepath.Join(testdataPath, "out.lua.exec"),
+		amalgArgs:        amalgArgs,
+		luaExecArgs:      luaExecArgs,
+		outLuaFileName:   outLuaFile.Name(),
+		expectedStdout:   filepath.Join(testdataPath, "stdout"),
+		expectedLua:      exepctedLuaFileName,
+		expectedLuaExec:  filepath.Join(testdataPath, "out.lua.exec"),
+		firmwarePath:     filepath.Join(testdataPath, firmwareName),
+		depsFileName:     depsFileName,
+		rockspecFileName: rockspecFileName,
 	}
 }
 
@@ -108,7 +118,7 @@ func execDockerCommand(t *testing.T, args ...string) []byte {
 	cmd.Stderr = stderrBuf
 
 	require.NoError(t, cmd.Run(), "stdout:\n%s\n\nstderr:\n%s", stdoutBuf.String(), stderrBuf.String())
-	require.Empty(t, stderrBuf.String())
+	require.Empty(t, stderrBuf.String(), "stdout: %s", stdoutBuf.String())
 
 	return stdoutBuf.Bytes()
 }

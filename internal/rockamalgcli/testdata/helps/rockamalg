@@ -6,6 +6,7 @@ USAGE:
 
 COMMANDS:
    amalg    Amalgamates Lua files with all dependencies inside one Lua file.
+   server   Run gRPC server to amalgamate files by request.
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:

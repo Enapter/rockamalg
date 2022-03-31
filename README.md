@@ -1,4 +1,7 @@
 # Rockamalg
+![CI](https://github.com/Enapter/rockamalg/workflows/publish/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Enapter/rockamalg)](https://goreportcard.com/report/github.com/Enapter/rockamalg)
+[![License](https://img.shields.io/github/license/Enapter/rockamalg)](LICENSE)
 
 Rockamalg amalgamates several Lua files with all their dependencies into a single Lua file.
 
@@ -58,4 +61,15 @@ You can split `firmware.lua` into multiple files and use Lua modules as usual. T
 E.g. your firmware is placed in `firmware_dir`. So you can amalgamate your firmware by the following command:
 ```
 docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -d deps firmware_dir
+```
+
+## Server mode
+
+It's possible to run rockamalg in server mode. This mode is useful to integrate with another services, which works in separate Docker containers.
+
+## Contributing
+### Generate GRPC API
+To generate GRPC API use the following command:
+```
+./scripts/gogen.sh go generate -v ./internal/api/rockamalgrpc/generate.go
 ```
