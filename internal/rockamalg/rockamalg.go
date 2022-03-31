@@ -64,6 +64,7 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 
 type amalg struct {
 	p            Params
+	firmwareDir  string
 	modules      []string
 	rockspecTmpl *template.Template
 	cleanupFns   []func()
@@ -100,14 +101,10 @@ func (a *amalg) Do(ctx context.Context) error {
 	}
 
 	if !fwIsDir {
-		if err := os.Chdir(filepath.Dir(a.p.Firmware)); err != nil {
-			return fmt.Errorf("chdir: %w", err)
-		}
+		a.firmwareDir = filepath.Dir(a.p.Firmware)
 		a.p.Firmware = filepath.Base(a.p.Firmware)
 	} else {
-		if err := os.Chdir(a.p.Firmware); err != nil {
-			return fmt.Errorf("chdir: %w", err)
-		}
+		a.firmwareDir = a.p.Firmware
 
 		if err := a.gatherFirmwareDirectory(ctx); err != nil {
 			return fmt.Errorf("gathering firmware directory: %w", err)
@@ -216,7 +213,7 @@ func (a *amalg) calculateRequires(ctx context.Context) error {
 }
 
 func (a *amalg) gatherFirmwareDirectory(context.Context) error {
-	err := filepath.WalkDir(".", func(path string, de fs.DirEntry, err error) error {
+	err := filepath.WalkDir(a.firmwareDir, func(path string, de fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -229,7 +226,8 @@ func (a *amalg) gatherFirmwareDirectory(context.Context) error {
 			return nil
 		}
 
-		mod := strings.ReplaceAll(path, "/", ".")
+		mod := strings.TrimPrefix(path, a.firmwareDir+string(os.PathSeparator))
+		mod = strings.ReplaceAll(mod, "/", ".")
 		mod = strings.TrimSuffix(mod, ".lua")
 		mod = strings.TrimSuffix(mod, ".init")
 
@@ -250,6 +248,7 @@ func (a *amalg) amalgamate(ctx context.Context) error {
 	args := []string{"--debug", "-o", a.p.Output, "-s", a.p.Firmware}
 	args = append(args, a.modules...)
 	cmd := exec.CommandContext(ctx, "amalg.lua", args...)
+	cmd.Dir = a.firmwareDir
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
