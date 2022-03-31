@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package rockamalg.rpc;
+
+import "google/protobuf/empty.proto";
+
+option go_package = ".;rockamalgrpc";
+
+service Rockamalg {
+    rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+    rpc Amalg (AmalgRequest) returns (AmalgResponse) {
+    }
+}
+
+message AmalgRequest {
+    bytes firmware_file = 1;
+    bytes firmware_dir = 2;
+    repeated string dependencies = 3;
+    bytes rockspec = 4;
+}
+
+message AmalgResponse {
+    bytes lua = 1;
+}

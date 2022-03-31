@@ -9,6 +9,7 @@ func NewApp() *cli.App {
 
 	app.Commands = []*cli.Command{
 		buildCmdAmalg(),
+		buildCmdServer(),
 	}
 
 	return app
