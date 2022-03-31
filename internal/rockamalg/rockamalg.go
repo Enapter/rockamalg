@@ -23,6 +23,7 @@ type Params struct {
 	Rockspec     string
 	Firmware     string
 	Output       string
+	Isolate      bool
 	Writer       io.Writer
 }
 
@@ -65,6 +66,7 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 type amalg struct {
 	p            Params
 	firmwareDir  string
+	rocksTree    string
 	modules      []string
 	rockspecTmpl *template.Template
 	cleanupFns   []func()
@@ -165,8 +167,17 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 		return errRockspecIsNotRegularFile
 	}
 
-	cmd := exec.CommandContext(ctx, "luarocks", "install", "--only-deps", a.p.Rockspec) //nolint:gosec,lll // rockspec is checked to be a regular file
-	cmd.Stderr = os.Stderr
+	if a.p.Isolate {
+		tmpDir, err := os.MkdirTemp("/tmp", "luarocks_deps_")
+		if err != nil {
+			return fmt.Errorf("mkdir temp: %w", err)
+		}
+		a.cleanupFns = append(a.cleanupFns, func() { os.RemoveAll(tmpDir) })
+		a.rocksTree = tmpDir
+	}
+
+	cmd := a.buildLuaRocksCommand(ctx, "install", "--only-deps", a.p.Rockspec)
+	cmd.Stderr = os.Stdout
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("run luarocks install: %w", err)
 	}
@@ -176,7 +187,7 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 
 func (a *amalg) calculateRequires(ctx context.Context) error {
 	rocksListBuf := &bytes.Buffer{}
-	rocksListCmd := exec.CommandContext(ctx, "luarocks", "list", "--porcelain")
+	rocksListCmd := a.buildLuaRocksCommand(ctx, "list", "--porcelain")
 	rocksListCmd.Stdout = rocksListBuf
 	rocksListCmd.Stderr = os.Stderr
 
@@ -192,7 +203,7 @@ func (a *amalg) calculateRequires(ctx context.Context) error {
 			continue
 		}
 
-		rockModulesCmd := exec.CommandContext(ctx, "luarocks", "show", "--modules", rock)
+		rockModulesCmd := a.buildLuaRocksCommand(ctx, "show", "--modules", rock)
 		rockModulesCmd.Stdout = rocksModulesBuf
 		rockModulesCmd.Stderr = os.Stderr
 
@@ -251,10 +262,38 @@ func (a *amalg) amalgamate(ctx context.Context) error {
 	cmd.Dir = a.firmwareDir
 	cmd.Stderr = os.Stderr
 
+	if a.p.Isolate {
+		outBuf := &bytes.Buffer{}
+		rockLuaPathCmd := a.buildLuaRocksCommand(ctx, "path")
+		rockLuaPathCmd.Stdout = outBuf
+
+		if err := rockLuaPathCmd.Run(); err != nil {
+			return fmt.Errorf("run luarocks path: %w", err)
+		}
+
+		cmd.Env = append(cmd.Env, a.extractLuaPathEnv(outBuf.String()))
+	}
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("amalg.lua: %w", err)
 	}
 	return nil
+}
+
+func (a *amalg) buildLuaRocksCommand(ctx context.Context, args ...string) *exec.Cmd {
+	if a.rocksTree != "" {
+		args = append([]string{"--tree", a.rocksTree}, args...)
+	}
+	return exec.CommandContext(ctx, "luarocks", args...)
+}
+
+func (*amalg) extractLuaPathEnv(data string) string {
+	for _, s := range strings.Fields(data) {
+		if strings.HasPrefix(s, "LUA_PATH='") {
+			return strings.Replace(strings.TrimSuffix(s, "'"), "LUA_PATH='", "LUA_PATH=", 1)
+		}
+	}
+	return ""
 }
 
 func (a *amalg) wrapWithMsg(fn func(context.Context) error, msg string) func(context.Context) error {
