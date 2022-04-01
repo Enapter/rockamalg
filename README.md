@@ -13,6 +13,10 @@ It uses [LuaRocks](https://luarocks.org/) to install dependencies and [amalg.lua
 
 ## How to use
 
+### Tutorial
+
+Enapter has [an official tutorial](https://developers.enapter.com/docs/tutorial/lua-complex/multi-file) about Rockamalg usage.
+
 ### Quick start
 
 You can describe dependencies in rockspec format like this:
