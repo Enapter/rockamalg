@@ -1,3 +1,7 @@
+# 0.5.0 (April 1, 2022)
+* Added server mode
+* Push to Enapter Docker hub too
+
 # 0.4.0 (March 25, 2022)
 * Migrate to Golang
 * Docker run command a little changed
