@@ -53,12 +53,6 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: enapter/rockamalg
-      - name: Login to DockerHub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and export to Docker
         uses: docker/build-push-action@v2
         with:
@@ -67,7 +61,13 @@ jobs:
           tags: ${{ env.TEST_TAG }}
       - name: Integration Tests
         run: go test -tags=integration -timeout 1m ./tests/integration
-      - name: Build and push
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push to DockerHub
         if: ${{ github.event_name != 'pull_request' }}
         uses: docker/build-push-action@v2
         with:
@@ -75,3 +75,24 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Login to Enapter DockerHub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          registry: docker.enapter.com
+          username: ${{ secrets.ENAPTER_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.ENAPTER_DOCKERHUB_TOKEN }}
+      - name: Enapter Docker meta
+        if: github.event_name != 'pull_request'
+        id: enapter_meta
+        uses: docker/metadata-action@v3
+        with:
+          images: docker.enapter.com/lua/rockamalg
+      - name: Build and push to Enapter DockerHub
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.enapter_meta.outputs.tags }}
+          labels: ${{ steps.enapter_meta.outputs.labels }}
