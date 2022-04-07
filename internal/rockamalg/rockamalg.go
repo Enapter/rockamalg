@@ -21,7 +21,7 @@ type Rockamalg struct {
 type Params struct {
 	Dependencies string
 	Rockspec     string
-	Firmware     string
+	Lua          string
 	Output       string
 	Isolate      bool
 	Writer       io.Writer
@@ -53,8 +53,8 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 		return errRockspecDepsSimultaneously
 	}
 
-	if p.Firmware == "" {
-		return errFirmwareMissed
+	if p.Lua == "" {
+		return errLuaMissed
 	}
 
 	a := amalg{p: p, rockspecTmpl: r.rockspecTmpl}
@@ -65,7 +65,7 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 
 type amalg struct {
 	p            Params
-	firmwareDir  string
+	luaDir       string
 	rocksTree    string
 	modules      []string
 	rockspecTmpl *template.Template
@@ -97,22 +97,22 @@ func (a *amalg) Do(ctx context.Context) error {
 		a.p.Output = filepath.Join(curDir, a.p.Output)
 	}
 
-	fwIsDir, err := isDirectory(a.p.Firmware)
+	luaIsDir, err := isDirectory(a.p.Lua)
 	if err != nil {
-		return fmt.Errorf("checking firmware is directory: %w", err)
+		return fmt.Errorf("checking lua is directory: %w", err)
 	}
 
-	if !fwIsDir {
-		a.firmwareDir = filepath.Dir(a.p.Firmware)
-		a.p.Firmware = filepath.Base(a.p.Firmware)
+	if !luaIsDir {
+		a.luaDir = filepath.Dir(a.p.Lua)
+		a.p.Lua = filepath.Base(a.p.Lua)
 	} else {
-		a.firmwareDir = a.p.Firmware
+		a.luaDir = a.p.Lua
 
-		if err := a.gatherFirmwareDirectory(ctx); err != nil {
-			return fmt.Errorf("gathering firmware directory: %w", err)
+		if err := a.gatherLuaDirectory(ctx); err != nil {
+			return fmt.Errorf("gathering lua directory: %w", err)
 		}
 
-		a.p.Firmware = "main.lua"
+		a.p.Lua = "main.lua"
 	}
 
 	if err := a.wrapWithMsg(a.amalgamate, "Amalgamation")(ctx); err != nil {
@@ -223,8 +223,8 @@ func (a *amalg) calculateRequires(ctx context.Context) error {
 	return nil
 }
 
-func (a *amalg) gatherFirmwareDirectory(context.Context) error {
-	err := filepath.WalkDir(a.firmwareDir, func(path string, de fs.DirEntry, err error) error {
+func (a *amalg) gatherLuaDirectory(context.Context) error {
+	err := filepath.WalkDir(a.luaDir, func(path string, de fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -237,7 +237,7 @@ func (a *amalg) gatherFirmwareDirectory(context.Context) error {
 			return nil
 		}
 
-		mod := strings.TrimPrefix(path, a.firmwareDir+string(os.PathSeparator))
+		mod := strings.TrimPrefix(path, a.luaDir+string(os.PathSeparator))
 		mod = strings.ReplaceAll(mod, "/", ".")
 		mod = strings.TrimSuffix(mod, ".lua")
 		mod = strings.TrimSuffix(mod, ".init")
@@ -249,17 +249,17 @@ func (a *amalg) gatherFirmwareDirectory(context.Context) error {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("firmware dir walk: %w", err)
+		return fmt.Errorf("lua dir walk: %w", err)
 	}
 
 	return nil
 }
 
 func (a *amalg) amalgamate(ctx context.Context) error {
-	args := []string{"--debug", "-o", a.p.Output, "-s", a.p.Firmware}
+	args := []string{"--debug", "-o", a.p.Output, "-s", a.p.Lua}
 	args = append(args, a.modules...)
 	cmd := exec.CommandContext(ctx, "amalg.lua", args...)
-	cmd.Dir = a.firmwareDir
+	cmd.Dir = a.luaDir
 	cmd.Stderr = os.Stderr
 
 	if a.p.Isolate {
