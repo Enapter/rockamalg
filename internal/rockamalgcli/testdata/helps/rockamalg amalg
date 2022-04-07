@@ -9,7 +9,7 @@ DESCRIPTION:
    
    The dependencies file should be in the Luarocks format.
    
-   See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/multi-file to learn more.
+   See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introduction to learn more.
 
 OPTIONS:
    --deps value, -d value      Use dependencies file
