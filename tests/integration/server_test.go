@@ -10,7 +10,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -42,17 +41,12 @@ func TestServer(t *testing.T) {
 			resp, err := cli.Amalg(context.Background(), req)
 			require.NoError(t, err)
 
-			respLua := filterTmp(resp.GetLua())
-			checkExpectedWithBytes(t, testOpts.expectedLua, respLua)
+			checkExpectedWithBytes(t, testOpts.expectedLua, resp.GetLua())
 
 			stdoutBytes := execDockerCommand(t, testOpts.luaExecArgs...)
 			checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
 		})
 	}
-}
-
-func filterTmp(d []byte) []byte {
-	return regexp.MustCompile(`/tmp/luarocks_deps_\d*`).ReplaceAll(d, []byte("/usr/local"))
 }
 
 func buildReq(t *testing.T, opts testOpts) *rockamalgrpc.AmalgRequest {
