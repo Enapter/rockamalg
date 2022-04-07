@@ -27,7 +27,7 @@ The lua should be a single Lua file or directory with main.lua and other Lua fil
 
 The dependencies file should be in the Luarocks format.
 
-See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/multi-file to learn more.
+See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introduction to learn more.
 `,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
