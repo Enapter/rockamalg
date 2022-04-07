@@ -9,13 +9,13 @@ It uses [LuaRocks](https://luarocks.org/) to install dependencies and [amalg.lua
 
 ## Why?
 
-[Enapter Blueprints](https://developers.enapter.com/docs/#blueprints) uses firmware as a single Lua file. But it can be complex to manage, and firmware developers may want to split them into several modules or use existing modules. So we need a tool to combine multiple Lua modules into a single firmware file.
+[Enapter Blueprints](https://developers.enapter.com/docs/#blueprints) uses a single Lua file. But it can be complex to manage, and developers may want to split them into several modules or use existing modules. So we need a tool to combine multiple Lua modules into a single file.
 
 ## How to use
 
 ### Tutorial
 
-Enapter has [an official tutorial](https://developers.enapter.com/docs/tutorial/lua-complex/multi-file) about Rockamalg usage.
+Enapter has [an official tutorial](https://developers.enapter.com/docs/tutorial/lua-complex/introduction) about Rockamalg usage.
 
 ### Quick start
 
@@ -28,9 +28,9 @@ beemovie
 
 Note, that Lua version should not be specified and commas and quotes are omitted.
 
-Save this into file (e.g. `deps`) and you can amalgamate your `firmware.lua` with all dependencies via command:
+Save this into file (e.g. `deps`) and you can amalgamate your `ucm.lua` with all dependencies via command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -d deps firmware.lua
+docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -d deps ucm.lua
 ```
 
 ### Rockspec
@@ -53,18 +53,18 @@ dependencies = {
 
 This file should have a specific name `generated-dev-1.rockspec`. The parts of name should be the same as described inside specfile: `<package>-<version>.rockspec`.
 
-After that you can amalgamate your `firmware.lua` with all dependencies via command:
+After that you can amalgamate your `ucm.lua` with all dependencies via command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -r my.rockspec firmware.lua
+docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -r my.rockspec ucm.lua
 ```
 
-### Firmware directory
+### Lua directory
 
-You can split `firmware.lua` into multiple files and use Lua modules as usual. The only one requirement is that entrypoint should have name `main.lua`.
+You can split `ucm.lua` into multiple files and use Lua modules as usual. The only one requirement is that entrypoint should have name `main.lua`.
 
-E.g. your firmware is placed in `firmware_dir`. So you can amalgamate your firmware by the following command:
+E.g. your scrpt is placed in `lua_dir`. So you can amalgamate your `ucm.lua` by the following command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -d deps firmware_dir
+docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o ucm.lua -d deps lua_dir
 ```
 
 ## Server mode

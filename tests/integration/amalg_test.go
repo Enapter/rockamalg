@@ -42,7 +42,7 @@ type testOpts struct {
 	expectedStdout   string
 	expectedLua      string
 	expectedLuaExec  string
-	firmwarePath     string
+	luaPath          string
 	depsFileName     string
 	rockspecFileName string
 }
@@ -58,10 +58,10 @@ func buildTestOpts(t *testing.T, name string) testOpts {
 	t.Cleanup(func() { os.Remove(outLuaFile.Name()) })
 	require.NoError(t, outLuaFile.Close())
 
-	firmwareNameBytes, err := os.ReadFile(filepath.Join(testdataPath, "firmware"))
+	luaNameBytes, err := os.ReadFile(filepath.Join(testdataPath, "lua"))
 	require.NoError(t, err)
 
-	firmwareName := strings.TrimSpace(string(firmwareNameBytes))
+	luaName := strings.TrimSpace(string(luaNameBytes))
 
 	curdir, err := os.Getwd()
 	require.NoError(t, err)
@@ -85,7 +85,7 @@ func buildTestOpts(t *testing.T, name string) testOpts {
 		rockspecFileName = ""
 	}
 
-	amalgArgs = append(amalgArgs, filepath.Join(testdataPath, firmwareName))
+	amalgArgs = append(amalgArgs, filepath.Join(testdataPath, luaName))
 
 	exepctedLuaFileName := filepath.Join(testdataPath, "out.lua")
 	luaExecArgs := []string{
@@ -100,7 +100,7 @@ func buildTestOpts(t *testing.T, name string) testOpts {
 		expectedStdout:   filepath.Join(testdataPath, "stdout"),
 		expectedLua:      exepctedLuaFileName,
 		expectedLuaExec:  filepath.Join(testdataPath, "out.lua.exec"),
-		firmwarePath:     filepath.Join(testdataPath, firmwareName),
+		luaPath:          filepath.Join(testdataPath, luaName),
 		depsFileName:     depsFileName,
 		rockspecFileName: rockspecFileName,
 	}

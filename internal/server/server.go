@@ -40,14 +40,14 @@ func (s *Server) Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 func (s *Server) Amalg(
 	ctx context.Context, req *rockamalgrpc.AmalgRequest,
 ) (*rockamalgrpc.AmalgResponse, error) {
-	if len(req.GetFirmwareDir()) != 0 && len(req.GetFirmwareFile()) != 0 {
+	if len(req.GetLuaDir()) != 0 && len(req.GetLuaFile()) != 0 {
 		return nil, status.Error(codes.InvalidArgument,
-			"firmware file and firmware directory are not allowed simultaneously")
+			"lua_file and lua_directory are not allowed simultaneously")
 	}
 
-	if len(req.GetFirmwareDir()) == 0 && len(req.GetFirmwareFile()) == 0 {
+	if len(req.GetLuaDir()) == 0 && len(req.GetLuaFile()) == 0 {
 		return nil, status.Error(codes.InvalidArgument,
-			"firmware file or firmware directory are not provided")
+			"lua_file or lua_directory are not provided")
 	}
 
 	amalgDir, err := os.MkdirTemp("/tmp", "amalg")
@@ -73,15 +73,15 @@ func (s *Server) Amalg(
 		return nil, status.Errorf(codes.Internal, "create rockspec file: %v", err)
 	}
 
-	if len(req.GetFirmwareFile()) != 0 {
-		amalgParams.Firmware = filepath.Join(amalgDir, "fw.lua")
-		if err := os.WriteFile(amalgParams.Firmware, req.GetFirmwareFile(), newFilePerm); err != nil {
-			return nil, status.Errorf(codes.Internal, "create firmware file: %v", err)
+	if len(req.GetLuaFile()) != 0 {
+		amalgParams.Lua = filepath.Join(amalgDir, "fw.lua")
+		if err := os.WriteFile(amalgParams.Lua, req.GetLuaFile(), newFilePerm); err != nil {
+			return nil, status.Errorf(codes.Internal, "create lua file: %v", err)
 		}
 	} else {
-		amalgParams.Firmware = filepath.Join(amalgDir, "fw")
-		if err := s.writeFirmwareDir(req.GetFirmwareDir(), amalgParams.Firmware); err != nil {
-			return nil, status.Errorf(codes.Internal, "create firmware dir: %v", err)
+		amalgParams.Lua = filepath.Join(amalgDir, "fw")
+		if err := s.writeLuaDir(req.GetLuaDir(), amalgParams.Lua); err != nil {
+			return nil, status.Errorf(codes.Internal, "create lua dir: %v", err)
 		}
 	}
 
@@ -151,7 +151,7 @@ func (s *Server) writeRockspec(ctx context.Context, data []byte, path string) (s
 	return rockspecFileName, nil
 }
 
-func (s *Server) writeFirmwareDir(data []byte, path string) error {
+func (s *Server) writeLuaDir(data []byte, path string) error {
 	archive, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return fmt.Errorf("create zip reader: %w", err)

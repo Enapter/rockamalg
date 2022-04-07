@@ -13,8 +13,8 @@ service Rockamalg {
 }
 
 message AmalgRequest {
-    bytes firmware_file = 1;
-    bytes firmware_dir = 2;
+    bytes lua_file = 1;
+    bytes lua_dir = 2;
     repeated string dependencies = 3;
     bytes rockspec = 4;
 }

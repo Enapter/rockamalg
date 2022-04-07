@@ -60,10 +60,10 @@ func buildReq(t *testing.T, opts testOpts) *rockamalgrpc.AmalgRequest {
 
 	req := &rockamalgrpc.AmalgRequest{}
 
-	if isDirectory(t, opts.firmwarePath) {
-		req.FirmwareDir = zipDir(t, opts.firmwarePath)
+	if isDirectory(t, opts.luaPath) {
+		req.LuaDir = zipDir(t, opts.luaPath)
 	} else {
-		req.FirmwareFile = shouldReadFile(t, opts.firmwarePath)
+		req.LuaFile = shouldReadFile(t, opts.luaPath)
 	}
 
 	if opts.rockspecFileName != "" {

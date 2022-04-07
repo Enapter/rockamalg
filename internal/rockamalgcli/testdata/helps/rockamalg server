@@ -1,0 +1,11 @@
+NAME:
+   rockamalgcli.test server - Run gRPC server to amalgamate files by request.
+
+USAGE:
+   rockamalgcli.test server [command options] [arguments...]
+
+OPTIONS:
+   --listen-address value, -l value  Listen address [$LISTEN_ADDRESS]
+   --retry-timeout value, -r value   Timeout between server restars (default: 0s) [$RETRY_TIMEOUT]
+   --help, -h                        show help (default: false)
+   

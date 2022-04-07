@@ -2,10 +2,10 @@ NAME:
    rockamalgcli.test amalg - Amalgamates Lua files with all dependencies inside one Lua file.
 
 USAGE:
-   rockamalgcli.test amalg [command options] firmware
+   rockamalgcli.test amalg [command options] lua
 
 DESCRIPTION:
-   The firmware should be a single Lua file or directory with main.lua and other Lua files.
+   The lua should be a single Lua file or directory with main.lua and other Lua files.
    
    The dependencies file should be in the Luarocks format.
    
@@ -14,6 +14,6 @@ DESCRIPTION:
 OPTIONS:
    --deps value, -d value      Use dependencies file
    --rockspec value, -r value  Use rockspec file for dependencies
-   --output value, -o value    Output firmware file name
+   --output value, -o value    Output Lua file name
    --help, -h                  show help (default: false)
    

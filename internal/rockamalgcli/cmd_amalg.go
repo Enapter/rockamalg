@@ -12,7 +12,7 @@ type cmdAmalg struct {
 	deps     string
 	rockspec string
 	output   string
-	firmware string
+	lua      string
 }
 
 func buildCmdAmalg() *cli.Command {
@@ -21,9 +21,9 @@ func buildCmdAmalg() *cli.Command {
 	return &cli.Command{
 		Name:      "amalg",
 		Usage:     "Amalgamates Lua files with all dependencies inside one Lua file.",
-		ArgsUsage: "firmware",
+		ArgsUsage: "lua",
 		Description: `
-The firmware should be a single Lua file or directory with main.lua and other Lua files.
+The lua should be a single Lua file or directory with main.lua and other Lua files.
 
 The dependencies file should be in the Luarocks format.
 
@@ -45,7 +45,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/multi-
 			&cli.StringFlag{
 				Name:        "output",
 				Aliases:     []string{"o"},
-				Usage:       "Output firmware file name",
+				Usage:       "Output Lua file name",
 				Destination: &cmd.output,
 				Required:    true,
 			},
@@ -55,7 +55,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/multi-
 				return errOutputIsAbsolutePath
 			}
 
-			cmd.firmware = cliCtx.Args().First()
+			cmd.lua = cliCtx.Args().First()
 
 			return nil
 		},
@@ -65,7 +65,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/multi-
 					rockamalg.Params{
 						Dependencies: cmd.deps,
 						Rockspec:     cmd.rockspec,
-						Firmware:     cmd.firmware,
+						Lua:          cmd.lua,
 						Output:       cmd.output,
 						Writer:       cliCtx.App.Writer,
 					})
