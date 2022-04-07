@@ -119,6 +119,12 @@ func (a *amalg) Do(ctx context.Context) error {
 		return fmt.Errorf("amalgamation: %w", err)
 	}
 
+	if a.p.Isolate {
+		if err := a.wrapWithMsg(a.cleanupResult, "Cleanup result")(ctx); err != nil {
+			return fmt.Errorf("cleanup result: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -277,6 +283,38 @@ func (a *amalg) amalgamate(ctx context.Context) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("amalg.lua: %w", err)
 	}
+	return nil
+}
+
+func (a *amalg) cleanupResult(ctx context.Context) error {
+	if a.rocksTree == "" {
+		return nil
+	}
+
+	f, err := os.OpenFile(a.p.Output, os.O_RDWR, 0)
+	if err != nil {
+		return fmt.Errorf("open: %w", err)
+	}
+
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		return fmt.Errorf("read: %w", err)
+	}
+
+	buf = bytes.ReplaceAll(buf, []byte(a.rocksTree), []byte("/usr/local"))
+
+	if err := f.Truncate(0); err != nil {
+		return fmt.Errorf("truncate: %w", err)
+	}
+
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("seek: %w", err)
+	}
+
+	if _, err := f.Write(buf); err != nil {
+		return fmt.Errorf("write: %w", err)
+	}
+
 	return nil
 }
 

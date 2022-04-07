@@ -1,3 +1,6 @@
+# 0.6.1 (April 8, 2022)
+* Cleanup amalgamated output.
+
 # 0.6.0 (April 7, 2022)
 * Fix terminology: firmware is wrong termin in that context, Lua script is good.
 

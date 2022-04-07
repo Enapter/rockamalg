@@ -42,12 +42,12 @@ func (s *Server) Amalg(
 ) (*rockamalgrpc.AmalgResponse, error) {
 	if len(req.GetLuaDir()) != 0 && len(req.GetLuaFile()) != 0 {
 		return nil, status.Error(codes.InvalidArgument,
-			"lua_file and lua_directory are not allowed simultaneously")
+			"lua file and lua directory are not allowed simultaneously")
 	}
 
 	if len(req.GetLuaDir()) == 0 && len(req.GetLuaFile()) == 0 {
 		return nil, status.Error(codes.InvalidArgument,
-			"lua_file or lua_directory are not provided")
+			"lua file or lua directory are not provided")
 	}
 
 	amalgDir, err := os.MkdirTemp("/tmp", "amalg")
