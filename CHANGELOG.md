@@ -1,3 +1,6 @@
+# 0.6.0 (April 7, 2022)
+* Fix terminology: firmware is wrong termin in that context, Lua script is good.
+
 # 0.5.0 (April 1, 2022)
 * Added server mode
 * Push to Enapter Docker hub too
