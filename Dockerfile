@@ -23,7 +23,7 @@ RUN wget https://luarocks.org/releases/luarocks-3.8.0.tar.gz && \
     cd - && \
     rm -rf luarocks*
 
-RUN luarocks install amalg
+RUN luarocks install amalg 0.8-1
 
 RUN mkdir /opt/rockamalg
 COPY --from=builder /app/bin/rockamalg /opt/rockamalg/rockamalg
