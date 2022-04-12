@@ -45,14 +45,18 @@ func buildCmdServer() *cli.Command {
 				Address:      cmd.listenAddress,
 				RetryTimeout: cmd.retryTimeout,
 				OnRetryFn: func(err error) {
-					fmt.Fprintf(cliCtx.App.Writer, "restarting gRPC server")
+					fmt.Fprintf(cliCtx.App.Writer, "gRPC server restarting: %v\n", err)
 				},
 			})
 
 			go func() {
 				<-cliCtx.Done()
+				fmt.Fprintln(cliCtx.App.Writer, "gRPC server stopping")
 				gsrv.GracefulStop()
+				fmt.Fprintln(cliCtx.App.Writer, "gRPC server stopped")
 			}()
+
+			fmt.Fprintf(cliCtx.App.Writer, "gRPC server starting at %s\n", cmd.listenAddress)
 
 			rockamalgrpc.RegisterRockamalgServer(gsrv, server.New())
 			gsrv.Run(cliCtx.Context)
