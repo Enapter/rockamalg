@@ -115,12 +115,12 @@ func (a *amalg) Do(ctx context.Context) error {
 		a.p.Lua = "main.lua"
 	}
 
-	if err := a.wrapWithMsg(a.amalgamate, "Amalgamation")(ctx); err != nil {
-		return fmt.Errorf("amalgamation: %w", err)
+	if err := a.wrapWithMsg(a.amalgamate, "Amalgamating")(ctx); err != nil {
+		return fmt.Errorf("amalgamating: %w", err)
 	}
 
 	if a.p.Isolate {
-		if err := a.wrapWithMsg(a.cleanupResult, "Cleanup result")(ctx); err != nil {
+		if err := a.wrapWithMsg(a.cleanupResult, "Cleaning up result")(ctx); err != nil {
 			return fmt.Errorf("cleanup result: %w", err)
 		}
 	}
@@ -266,7 +266,8 @@ func (a *amalg) amalgamate(ctx context.Context) error {
 	args = append(args, a.modules...)
 	cmd := exec.CommandContext(ctx, "amalg.lua", args...)
 	cmd.Dir = a.luaDir
-	cmd.Stderr = os.Stderr
+	errBuf := &bytes.Buffer{}
+	cmd.Stderr = errBuf
 
 	if a.p.Isolate {
 		outBuf := &bytes.Buffer{}
@@ -281,7 +282,7 @@ func (a *amalg) amalgamate(ctx context.Context) error {
 	}
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("amalg.lua: %w", err)
+		return fmt.Errorf("amalg.lua: %w (%s)", err, errBuf.Bytes())
 	}
 	return nil
 }
