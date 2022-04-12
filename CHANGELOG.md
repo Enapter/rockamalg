@@ -1,3 +1,6 @@
+# 0.6.2 (April 12, 2022)
+* Improve logging.
+
 # 0.6.1 (April 8, 2022)
 * Cleanup amalgamated output.
 
