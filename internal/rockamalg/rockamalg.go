@@ -183,8 +183,7 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 	}
 
 	cmd := a.buildLuaRocksCommand(ctx, "install", "--only-deps", a.p.Rockspec)
-	cmd.Stderr = os.Stdout
-	if err := cmd.Run(); err != nil {
+	if _, err := runCmd(cmd); err != nil {
 		return fmt.Errorf("run luarocks install: %w", err)
 	}
 
@@ -192,16 +191,12 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 }
 
 func (a *amalg) calculateRequires(ctx context.Context) error {
-	rocksListBuf := &bytes.Buffer{}
 	rocksListCmd := a.buildLuaRocksCommand(ctx, "list", "--porcelain")
-	rocksListCmd.Stdout = rocksListBuf
-	rocksListCmd.Stderr = os.Stderr
-
-	if err := rocksListCmd.Run(); err != nil {
+	rocksListBuf, err := runCmd(rocksListCmd)
+	if err != nil {
 		return fmt.Errorf("run luarocks list: %w", err)
 	}
 
-	rocksModulesBuf := &bytes.Buffer{}
 	rocksScan := bufio.NewScanner(rocksListBuf)
 	for rocksScan.Scan() {
 		rock := strings.Fields(rocksScan.Text())[0]
@@ -210,10 +205,8 @@ func (a *amalg) calculateRequires(ctx context.Context) error {
 		}
 
 		rockModulesCmd := a.buildLuaRocksCommand(ctx, "show", "--modules", rock)
-		rockModulesCmd.Stdout = rocksModulesBuf
-		rockModulesCmd.Stderr = os.Stderr
-
-		if err := rockModulesCmd.Run(); err != nil {
+		rocksModulesBuf, err := runCmd(rockModulesCmd)
+		if err != nil {
 			return fmt.Errorf("run luarocks show modules: %w", err)
 		}
 
@@ -222,8 +215,6 @@ func (a *amalg) calculateRequires(ctx context.Context) error {
 			mod := strings.TrimSuffix(rockModulesScan.Text(), ".init")
 			a.modules = append(a.modules, mod)
 		}
-
-		rocksModulesBuf.Reset()
 	}
 
 	return nil
@@ -266,23 +257,19 @@ func (a *amalg) amalgamate(ctx context.Context) error {
 	args = append(args, a.modules...)
 	cmd := exec.CommandContext(ctx, "amalg.lua", args...)
 	cmd.Dir = a.luaDir
-	errBuf := &bytes.Buffer{}
-	cmd.Stderr = errBuf
 
 	if a.p.Isolate {
-		outBuf := &bytes.Buffer{}
 		rockLuaPathCmd := a.buildLuaRocksCommand(ctx, "path")
-		rockLuaPathCmd.Stdout = outBuf
-
-		if err := rockLuaPathCmd.Run(); err != nil {
+		output, err := runCmd(rockLuaPathCmd)
+		if err != nil {
 			return fmt.Errorf("run luarocks path: %w", err)
 		}
 
-		cmd.Env = append(cmd.Env, a.extractLuaPathEnv(outBuf.String()))
+		cmd.Env = append(cmd.Env, a.extractLuaPathEnv(output.String()))
 	}
 
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("amalg.lua: %w (%s)", err, errBuf.Bytes())
+	if _, err := runCmd(cmd); err != nil {
+		return fmt.Errorf("amalg.lua: %w", err)
 	}
 	return nil
 }
@@ -355,6 +342,19 @@ func (a *amalg) cleanup() {
 	for _, fn := range a.cleanupFns {
 		fn()
 	}
+}
+
+func runCmd(cmd *exec.Cmd) (*bytes.Buffer, error) {
+	outBuf := &bytes.Buffer{}
+	cmd.Stdout = outBuf
+	errBuf := &bytes.Buffer{}
+	cmd.Stderr = errBuf
+
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("%w (%s)", err, errBuf.Bytes())
+	}
+
+	return outBuf, nil
 }
 
 func isDirectory(path string) (bool, error) {

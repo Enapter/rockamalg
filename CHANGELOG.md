@@ -1,3 +1,6 @@
+# 0.6.3 (April 20, 2022)
+* Improve error messages after external command fails.
+
 # 0.6.2 (April 12, 2022)
 * Improve logging.
 
