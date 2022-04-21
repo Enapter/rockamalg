@@ -68,6 +68,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 						Lua:          cmd.lua,
 						Output:       cmd.output,
 						Writer:       cliCtx.App.Writer,
+						Isolate:      true,
 					})
 		},
 	}
