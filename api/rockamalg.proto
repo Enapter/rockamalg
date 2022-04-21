@@ -17,6 +17,7 @@ message AmalgRequest {
     bytes lua_dir = 2;
     repeated string dependencies = 3;
     bytes rockspec = 4;
+    bool isolate = 5;
 }
 
 message AmalgResponse {

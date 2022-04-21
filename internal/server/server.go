@@ -58,7 +58,7 @@ func (s *Server) Amalg(
 
 	amalgParams := rockamalg.Params{
 		Output:  filepath.Join(amalgDir, "out.lua"),
-		Isolate: true,
+		Isolate: req.Isolate,
 	}
 
 	if len(req.GetDependencies()) != 0 {

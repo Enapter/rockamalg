@@ -11,11 +11,18 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"text/template"
+
+	"github.com/enapter/rockamalg/internal/rockamalg/analyzer"
 )
 
+const cacheTree = "/opt/rockamalg/.cache"
+
 type Rockamalg struct {
-	rockspecTmpl *template.Template
+	rockspecTmpl  *template.Template
+	analyzer      *analyzer.Analyzer
+	commandExecMu sync.Mutex
 }
 
 type Params struct {
@@ -45,6 +52,7 @@ dependencies = {
 
 	return &Rockamalg{
 		rockspecTmpl: tmpl,
+		analyzer:     analyzer.New(cacheTree),
 	}
 }
 
@@ -57,7 +65,28 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 		return errLuaMissed
 	}
 
-	a := amalg{p: p, rockspecTmpl: r.rockspecTmpl}
+	runCmdSync := func(cmd *exec.Cmd) (*bytes.Buffer, error) {
+		r.commandExecMu.Lock()
+		defer r.commandExecMu.Unlock()
+
+		outBuf := &bytes.Buffer{}
+		cmd.Stdout = outBuf
+		errBuf := &bytes.Buffer{}
+		cmd.Stderr = errBuf
+
+		if err := cmd.Run(); err != nil {
+			return nil, fmt.Errorf("%w (%s)", err, errBuf.Bytes())
+		}
+
+		return outBuf, nil
+	}
+
+	a := amalg{
+		p:            p,
+		rockspecTmpl: r.rockspecTmpl,
+		runCmd:       runCmdSync,
+		analyzer:     r.analyzer,
+	}
 	defer a.cleanup()
 
 	return a.Do(ctx)
@@ -66,13 +95,21 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 type amalg struct {
 	p            Params
 	luaDir       string
-	rocksTree    string
+	luaMain      string
+	singleFile   bool
+	isolatedTree string
 	modules      []string
 	rockspecTmpl *template.Template
 	cleanupFns   []func()
+	analyzer     *analyzer.Analyzer
+	runCmd       func(cmd *exec.Cmd) (*bytes.Buffer, error)
 }
 
 func (a *amalg) Do(ctx context.Context) error {
+	if err := a.wrapWithMsg(a.setupConfig, "Setting up configuration")(ctx); err != nil {
+		return fmt.Errorf("set up configuration: %w", err)
+	}
+
 	if a.p.Dependencies != "" {
 		if err := a.wrapWithMsg(a.generateRockspec, "Generating rockspec")(ctx); err != nil {
 			return fmt.Errorf("generate rockspec: %w", err)
@@ -89,6 +126,29 @@ func (a *amalg) Do(ctx context.Context) error {
 		return fmt.Errorf("calculate requires: %w", err)
 	}
 
+	if err := a.wrapWithMsg(a.amalgamate, "Amalgamating")(ctx); err != nil {
+		return fmt.Errorf("amalgamate: %w", err)
+	}
+
+	if a.p.Isolate {
+		if err := a.wrapWithMsg(a.cleanupResult, "Cleaning up result")(ctx); err != nil {
+			return fmt.Errorf("clean up result: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (a *amalg) setupConfig(ctx context.Context) error {
+	if a.p.Isolate {
+		tmpDir, err := os.MkdirTemp("/tmp", "luarocks_deps_")
+		if err != nil {
+			return fmt.Errorf("mkdir temp: %w", err)
+		}
+		a.cleanupFns = append(a.cleanupFns, func() { os.RemoveAll(tmpDir) })
+		a.isolatedTree = tmpDir
+	}
+
 	if !filepath.IsAbs(a.p.Output) {
 		curDir, err := os.Getwd()
 		if err != nil {
@@ -102,27 +162,13 @@ func (a *amalg) Do(ctx context.Context) error {
 		return fmt.Errorf("checking lua is directory: %w", err)
 	}
 
-	if !luaIsDir {
-		a.luaDir = filepath.Dir(a.p.Lua)
-		a.p.Lua = filepath.Base(a.p.Lua)
-	} else {
+	if luaIsDir {
 		a.luaDir = a.p.Lua
-
-		if err := a.gatherLuaDirectory(ctx); err != nil {
-			return fmt.Errorf("gathering lua directory: %w", err)
-		}
-
-		a.p.Lua = "main.lua"
-	}
-
-	if err := a.wrapWithMsg(a.amalgamate, "Amalgamating")(ctx); err != nil {
-		return fmt.Errorf("amalgamating: %w", err)
-	}
-
-	if a.p.Isolate {
-		if err := a.wrapWithMsg(a.cleanupResult, "Cleaning up result")(ctx); err != nil {
-			return fmt.Errorf("cleanup result: %w", err)
-		}
+		a.luaMain = "main.lua"
+	} else {
+		a.luaDir = filepath.Dir(a.p.Lua)
+		a.luaMain = filepath.Base(a.p.Lua)
+		a.singleFile = true
 	}
 
 	return nil
@@ -173,17 +219,8 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 		return errRockspecIsNotRegularFile
 	}
 
-	if a.p.Isolate {
-		tmpDir, err := os.MkdirTemp("/tmp", "luarocks_deps_")
-		if err != nil {
-			return fmt.Errorf("mkdir temp: %w", err)
-		}
-		a.cleanupFns = append(a.cleanupFns, func() { os.RemoveAll(tmpDir) })
-		a.rocksTree = tmpDir
-	}
-
 	cmd := a.buildLuaRocksCommand(ctx, "install", "--only-deps", a.p.Rockspec)
-	if _, err := runCmd(cmd); err != nil {
+	if _, err := a.runCmd(cmd); err != nil {
 		return fmt.Errorf("run luarocks install: %w", err)
 	}
 
@@ -191,8 +228,95 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 }
 
 func (a *amalg) calculateRequires(ctx context.Context) error {
+	var err error
+	if a.p.Isolate {
+		err = a.calculateIsolatedRequires(ctx)
+	} else {
+		err = a.analyzeRequires(ctx)
+	}
+
+	return err
+}
+
+func (a *amalg) amalgamate(ctx context.Context) error {
+	args := []string{"--debug", "-o", a.p.Output, "-s", a.luaMain}
+	args = append(args, a.modules...)
+	cmd := exec.CommandContext(ctx, "amalg.lua", args...)
+	cmd.Dir = a.luaDir
+
+	rockLuaPathCmd := a.buildLuaRocksCommand(ctx, "path")
+	output, err := a.runCmd(rockLuaPathCmd)
+	if err != nil {
+		return fmt.Errorf("run luarocks path: %w", err)
+	}
+	cmd.Env = append(cmd.Env, a.extractLuaPathEnv(output.String()))
+
+	if _, err := a.runCmd(cmd); err != nil {
+		return fmt.Errorf("amalg.lua: %w", err)
+	}
+	return nil
+}
+
+func (a *amalg) cleanupResult(ctx context.Context) error {
+	if a.isolatedTree == "" {
+		return nil
+	}
+
+	f, err := os.OpenFile(a.p.Output, os.O_RDWR, 0)
+	if err != nil {
+		return fmt.Errorf("open: %w", err)
+	}
+
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		return fmt.Errorf("read: %w", err)
+	}
+
+	buf = bytes.ReplaceAll(buf, []byte(a.isolatedTree), []byte("/usr/local"))
+
+	if err := f.Truncate(0); err != nil {
+		return fmt.Errorf("truncate: %w", err)
+	}
+
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("seek: %w", err)
+	}
+
+	if _, err := f.Write(buf); err != nil {
+		return fmt.Errorf("write: %w", err)
+	}
+
+	return nil
+}
+
+func (a *amalg) calculateIsolatedRequires(ctx context.Context) error {
+	if err := a.calculateLuaRocksRequires(ctx); err != nil {
+		return fmt.Errorf("calculate luarocks requires: %w", err)
+	}
+
+	if !a.singleFile {
+		if err := a.gatherLuaDirectory(ctx); err != nil {
+			return fmt.Errorf("gather lua directory: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (a *amalg) analyzeRequires(context.Context) error {
+	reqs, err := a.analyzer.AnalyzeRequires(a.luaMain, a.luaDir)
+	if err != nil {
+		return fmt.Errorf("analyze requires: %w", err)
+	}
+
+	a.modules = append(a.modules, reqs...)
+
+	return nil
+}
+
+func (a *amalg) calculateLuaRocksRequires(ctx context.Context) error {
 	rocksListCmd := a.buildLuaRocksCommand(ctx, "list", "--porcelain")
-	rocksListBuf, err := runCmd(rocksListCmd)
+	rocksListBuf, err := a.runCmd(rocksListCmd)
 	if err != nil {
 		return fmt.Errorf("run luarocks list: %w", err)
 	}
@@ -205,7 +329,7 @@ func (a *amalg) calculateRequires(ctx context.Context) error {
 		}
 
 		rockModulesCmd := a.buildLuaRocksCommand(ctx, "show", "--modules", rock)
-		rocksModulesBuf, err := runCmd(rockModulesCmd)
+		rocksModulesBuf, err := a.runCmd(rockModulesCmd)
 		if err != nil {
 			return fmt.Errorf("run luarocks show modules: %w", err)
 		}
@@ -252,64 +376,14 @@ func (a *amalg) gatherLuaDirectory(context.Context) error {
 	return nil
 }
 
-func (a *amalg) amalgamate(ctx context.Context) error {
-	args := []string{"--debug", "-o", a.p.Output, "-s", a.p.Lua}
-	args = append(args, a.modules...)
-	cmd := exec.CommandContext(ctx, "amalg.lua", args...)
-	cmd.Dir = a.luaDir
-
-	if a.p.Isolate {
-		rockLuaPathCmd := a.buildLuaRocksCommand(ctx, "path")
-		output, err := runCmd(rockLuaPathCmd)
-		if err != nil {
-			return fmt.Errorf("run luarocks path: %w", err)
-		}
-
-		cmd.Env = append(cmd.Env, a.extractLuaPathEnv(output.String()))
-	}
-
-	if _, err := runCmd(cmd); err != nil {
-		return fmt.Errorf("amalg.lua: %w", err)
-	}
-	return nil
-}
-
-func (a *amalg) cleanupResult(ctx context.Context) error {
-	if a.rocksTree == "" {
-		return nil
-	}
-
-	f, err := os.OpenFile(a.p.Output, os.O_RDWR, 0)
-	if err != nil {
-		return fmt.Errorf("open: %w", err)
-	}
-
-	buf, err := io.ReadAll(f)
-	if err != nil {
-		return fmt.Errorf("read: %w", err)
-	}
-
-	buf = bytes.ReplaceAll(buf, []byte(a.rocksTree), []byte("/usr/local"))
-
-	if err := f.Truncate(0); err != nil {
-		return fmt.Errorf("truncate: %w", err)
-	}
-
-	if _, err := f.Seek(0, io.SeekStart); err != nil {
-		return fmt.Errorf("seek: %w", err)
-	}
-
-	if _, err := f.Write(buf); err != nil {
-		return fmt.Errorf("write: %w", err)
-	}
-
-	return nil
-}
-
 func (a *amalg) buildLuaRocksCommand(ctx context.Context, args ...string) *exec.Cmd {
-	if a.rocksTree != "" {
-		args = append([]string{"--tree", a.rocksTree}, args...)
+	var tree string
+	if a.isolatedTree != "" {
+		tree = a.isolatedTree
+	} else {
+		tree = cacheTree
 	}
+	args = append([]string{"--tree", tree}, args...)
 	return exec.CommandContext(ctx, "luarocks", args...)
 }
 
@@ -342,19 +416,6 @@ func (a *amalg) cleanup() {
 	for _, fn := range a.cleanupFns {
 		fn()
 	}
-}
-
-func runCmd(cmd *exec.Cmd) (*bytes.Buffer, error) {
-	outBuf := &bytes.Buffer{}
-	cmd.Stdout = outBuf
-	errBuf := &bytes.Buffer{}
-	cmd.Stderr = errBuf
-
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("%w (%s)", err, errBuf.Bytes())
-	}
-
-	return outBuf, nil
 }
 
 func isDirectory(path string) (bool, error) {
