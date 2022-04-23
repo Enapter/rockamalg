@@ -7,6 +7,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -32,27 +33,29 @@ func TestServer(t *testing.T) {
 
 	for _, fi := range files {
 		fi := fi
-		t.Run(fi.Name(), func(t *testing.T) {
-			t.Parallel()
+		for _, isolate := range []bool{false, true} {
+			isolate := isolate
+			t.Run(fmt.Sprintf("%s isolate %v", fi.Name(), isolate), func(t *testing.T) {
+				t.Parallel()
+				testOpts := buildTestOpts(t, fi.Name(), isolate)
+				req := buildReq(t, testOpts, isolate)
 
-			testOpts := buildTestOpts(t, fi.Name())
-			req := buildReq(t, testOpts)
+				resp, err := cli.Amalg(context.Background(), req)
+				require.NoError(t, err)
 
-			resp, err := cli.Amalg(context.Background(), req)
-			require.NoError(t, err)
+				checkExpectedWithBytes(t, testOpts.expectedLua, resp.GetLua())
 
-			checkExpectedWithBytes(t, testOpts.expectedLua, resp.GetLua())
-
-			stdoutBytes := execDockerCommand(t, testOpts.luaExecArgs...)
-			checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
-		})
+				stdoutBytes := execDockerCommand(t, testOpts.luaExecArgs...)
+				checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
+			})
+		}
 	}
 }
 
-func buildReq(t *testing.T, opts testOpts) *rockamalgrpc.AmalgRequest {
+func buildReq(t *testing.T, opts testOpts, isolate bool) *rockamalgrpc.AmalgRequest {
 	t.Helper()
 
-	req := &rockamalgrpc.AmalgRequest{}
+	req := &rockamalgrpc.AmalgRequest{Isolate: isolate}
 
 	if isDirectory(t, opts.luaPath) {
 		req.LuaDir = zipDir(t, opts.luaPath)
