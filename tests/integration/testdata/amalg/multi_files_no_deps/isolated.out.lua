@@ -44,6 +44,15 @@ end\
 return sayer\
 ", '@'.."./yopta/sayer.lua" ) )
 
+package.preload[ "yopta.unused" ] = assert( (loadstring or load)( "local mod = {}\
+\
+function mod.say_it()\
+    print(\"Hmmm...\")\
+end\
+\
+return mod\
+", '@'.."./yopta/unused.lua" ) )
+
 package.preload[ "yopta.utils" ] = assert( (loadstring or load)( "local utils = {}\
 \
 function utils.say_it()\

@@ -9,3 +9,15 @@ inspect = require "inspect"
 
 local v = ("Hello world!"):trimend("!"):sub(6):trim():totable()
 print(inspect(v))
+
+local x = 10
+
+local r = ""
+
+if x >= 10 then
+    r = require("hello")
+else
+    r = require("goodbye")
+end
+
+r.say(2)

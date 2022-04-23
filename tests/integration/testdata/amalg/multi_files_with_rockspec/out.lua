@@ -1,3 +1,25 @@
+package.preload[ "goodbye" ] = assert( (loadstring or load)( "local goodbye = {}\
+\
+local sayer = require(\"yopta.sayer\")\
+\
+function goodbye.say(n)\
+    sayer.say_each(n, \"goodbye\")\
+end\
+\
+return goodbye\
+", '@'.."./goodbye.lua" ) )
+
+package.preload[ "hello" ] = assert( (loadstring or load)( "local hello = {}\
+\
+local sayer = require(\"yopta.sayer\")\
+\
+function hello.say(n)\
+    sayer.say_each(n, \"hello\")\
+end\
+\
+return hello\
+", '@'.."./hello.lua" ) )
+
 package.preload[ "inspect" ] = assert( (loadstring or load)( "local inspect ={\
   _VERSION = 'inspect.lua 3.1.0',\
   _URL     = 'http://github.com/kikito/inspect.lua',\
@@ -332,7 +354,7 @@ setmetatable(inspect, { __call = function(_, ...) return inspect.inspect(...) en
 \
 return inspect\
 \
-", '@'.."/usr/local/share/lua/5.3/inspect.lua" ) )
+", '@'.."/opt/rockamalg/.cache/share/lua/5.3/inspect.lua" ) )
 
 package.preload[ "lua-string" ] = assert( (loadstring or load)( "local boolvalues = {\13\
 \9[\"1\"] = \"0\";\13\
@@ -620,7 +642,7 @@ function string:totable()\13\
 \9end\13\
 \9return result\13\
 end\13\
-", '@'.."/usr/local/share/lua/5.3/lua-string/init.lua" ) )
+", '@'.."/opt/rockamalg/.cache/share/lua/5.3/lua-string/init.lua" ) )
 
 package.preload[ "mymod" ] = assert( (loadstring or load)( "local mymodule = {}\
 \
@@ -631,14 +653,20 @@ end\
 return mymodule\
 ", '@'.."./mymod.lua" ) )
 
-package.preload[ "yopta.unused" ] = assert( (loadstring or load)( "local mod = {}\
+package.preload[ "yopta.sayer" ] = assert( (loadstring or load)( "local sayer = {}\
 \
-function mod.say_it()\
-    print(\"Hmmm...\")\
+function sayer.say_each(n, word)\
+    for i = 1, n do\
+        sayer.say(word)\
+    end\
 end\
 \
-return mod\
-", '@'.."./yopta/unused.lua" ) )
+function sayer.say(word)\
+    print(word)\
+end\
+\
+return sayer\
+", '@'.."./yopta/sayer.lua" ) )
 
 package.preload[ "yopta.utils" ] = assert( (loadstring or load)( "local utils = {}\
 \
@@ -660,5 +688,17 @@ inspect = require \"inspect\"\
 \
 local v = (\"Hello world!\"):trimend(\"!\"):sub(6):trim():totable()\
 print(inspect(v))\
+\
+local x = 10\
+\
+local r = \"\"\
+\
+if x >= 10 then\
+    r = require(\"hello\")\
+else\
+    r = require(\"goodbye\")\
+end\
+\
+r.say(2)\
 ", '@'.."main.lua" ) )( ... )
 

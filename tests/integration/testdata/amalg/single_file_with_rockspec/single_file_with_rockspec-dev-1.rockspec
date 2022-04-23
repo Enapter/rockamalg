@@ -7,5 +7,6 @@ source = {
 dependencies = {
     'lua ~> 5.3',
     'lua-string ~> 1.2',
-    'inspect ~> 3.1.2'
+    'inspect ~> 3.1.2',
+    'luassert ~> 1.8.0'
 }

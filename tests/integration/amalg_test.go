@@ -23,7 +23,7 @@ func TestAmalgCommand(t *testing.T) {
 		fi := fi
 		t.Run(fi.Name(), func(t *testing.T) {
 			t.Parallel()
-			testOpts := buildTestOpts(t, fi.Name())
+			testOpts := buildTestOpts(t, fi.Name(), true)
 
 			stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
 			checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
@@ -47,8 +47,14 @@ type testOpts struct {
 	rockspecFileName string
 }
 
-func buildTestOpts(t *testing.T, name string) testOpts {
+//nolint:funlen // setup a large number of fields
+func buildTestOpts(t *testing.T, name string, isolate bool) testOpts {
 	t.Helper()
+
+	o := out{lua: "out.lua", stdout: "stdout"}
+	if isolate {
+		o.SetIsolateOut()
+	}
 
 	testdataPath := filepath.Join("testdata/amalg", name)
 
@@ -87,7 +93,7 @@ func buildTestOpts(t *testing.T, name string) testOpts {
 
 	amalgArgs = append(amalgArgs, filepath.Join(testdataPath, luaName))
 
-	exepctedLuaFileName := filepath.Join(testdataPath, "out.lua")
+	exepctedLuaFileName := filepath.Join(testdataPath, o.lua)
 	luaExecArgs := []string{
 		"run", "--pull", "never", "--rm", "-v", curdir + ":/app",
 		"--entrypoint", "lua5.3", "enapter/rockamalg", exepctedLuaFileName,
@@ -97,13 +103,24 @@ func buildTestOpts(t *testing.T, name string) testOpts {
 		amalgArgs:        amalgArgs,
 		luaExecArgs:      luaExecArgs,
 		outLuaFileName:   outLuaFile.Name(),
-		expectedStdout:   filepath.Join(testdataPath, "stdout"),
+		expectedStdout:   filepath.Join(testdataPath, o.stdout),
 		expectedLua:      exepctedLuaFileName,
 		expectedLuaExec:  filepath.Join(testdataPath, "out.lua.exec"),
 		luaPath:          filepath.Join(testdataPath, luaName),
 		depsFileName:     depsFileName,
 		rockspecFileName: rockspecFileName,
 	}
+}
+
+type out struct {
+	lua    string
+	stdout string
+}
+
+func (o *out) SetIsolateOut() {
+	const pref = "isolated."
+	o.lua = pref + o.lua
+	o.stdout = pref + o.stdout
 }
 
 func execDockerCommand(t *testing.T, args ...string) []byte {
