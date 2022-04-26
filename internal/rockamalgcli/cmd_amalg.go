@@ -13,8 +13,10 @@ type cmdAmalg struct {
 	rockspec string
 	output   string
 	lua      string
+	isolate  bool
 }
 
+//nolint:funlen // large number of flags
 func buildCmdAmalg() *cli.Command {
 	var cmd cmdAmalg
 
@@ -49,6 +51,12 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 				Destination: &cmd.output,
 				Required:    true,
 			},
+			&cli.BoolFlag{
+				Name:        "isolate",
+				Aliases:     []string{"i"},
+				Usage:       "Enable isolate mode",
+				Destination: &cmd.isolate,
+			},
 		},
 		Before: func(cliCtx *cli.Context) error {
 			if filepath.IsAbs(cmd.output) {
@@ -68,7 +76,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 						Lua:          cmd.lua,
 						Output:       cmd.output,
 						Writer:       cliCtx.App.Writer,
-						Isolate:      true,
+						Isolate:      cmd.isolate,
 					})
 		},
 	}
