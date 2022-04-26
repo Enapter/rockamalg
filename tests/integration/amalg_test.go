@@ -21,17 +21,20 @@ func TestAmalgCommand(t *testing.T) {
 
 	for _, fi := range files {
 		fi := fi
-		t.Run(fi.Name(), func(t *testing.T) {
-			t.Parallel()
-			testOpts := buildTestOpts(t, fi.Name(), true)
+		for _, isolate := range []bool{false, true} {
+			isolate := isolate
+			t.Run(fi.Name(), func(t *testing.T) {
+				t.Parallel()
+				testOpts := buildTestOpts(t, fi.Name(), isolate)
 
-			stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
-			checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
-			checkExpectedWithFile(t, testOpts.expectedLua, testOpts.outLuaFileName)
+				stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
+				checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
+				checkExpectedWithFile(t, testOpts.expectedLua, testOpts.outLuaFileName)
 
-			stdoutBytes = execDockerCommand(t, testOpts.luaExecArgs...)
-			checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
-		})
+				stdoutBytes = execDockerCommand(t, testOpts.luaExecArgs...)
+				checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
+			})
+		}
 	}
 }
 
@@ -89,6 +92,10 @@ func buildTestOpts(t *testing.T, name string, isolate bool) testOpts {
 		amalgArgs = append(amalgArgs, "-r", rockspecFileName)
 	} else {
 		rockspecFileName = ""
+	}
+
+	if isolate {
+		amalgArgs = append(amalgArgs, "-i")
 	}
 
 	amalgArgs = append(amalgArgs, filepath.Join(testdataPath, luaName))

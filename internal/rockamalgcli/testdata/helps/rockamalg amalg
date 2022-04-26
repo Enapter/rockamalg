@@ -15,5 +15,6 @@ OPTIONS:
    --deps value, -d value      Use dependencies file
    --rockspec value, -r value  Use rockspec file for dependencies
    --output value, -o value    Output Lua file name
+   --isolate, -i               Enable isolate mode (default: false)
    --help, -h                  show help (default: false)
    
