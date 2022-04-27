@@ -30,7 +30,10 @@ Note, that Lua version should not be specified and commas and quotes are omitted
 
 Save this into file (e.g. `deps`) and you can amalgamate your `ucm.lua` with all dependencies via command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -d deps ucm.lua
+docker run --rm -it \
+	   -v $(pwd):/app \
+	   enapter/rockamalg \
+	   amalg -o out.lua -d deps ucm.lua
 ```
 
 ### Rockspec
@@ -55,7 +58,10 @@ This file should have a specific name `generated-dev-1.rockspec`. The parts of n
 
 After that you can amalgamate your `ucm.lua` with all dependencies via command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o out.lua -r my.rockspec ucm.lua
+docker run --rm -it \
+	   -v $(pwd):/app \
+	   enapter/rockamalg \
+	   amalg -o out.lua -r my.rockspec ucm.lua
 ```
 
 ### Lua directory
@@ -64,12 +70,72 @@ You can split `ucm.lua` into multiple files and use Lua modules as usual. The on
 
 E.g. your scrpt is placed in `lua_dir`. So you can amalgamate your `ucm.lua` by the following command:
 ```
-docker run --rm -it -v $(pwd):/app enapter/rockamalg amalg -o ucm.lua -d deps lua_dir
+docker run --rm -it \
+	   -v $(pwd):/app \
+	   enapter/rockamalg \
+	   amalg -o ucm.lua -d deps lua_dir
 ```
-
 ## Server mode
 
 It's possible to run rockamalg in server mode. This mode is useful to integrate with another services, which works in separate Docker containers.
+
+## Dependency caching
+
+Downloading dependencies for each amalgamation could take a lot of time. By default rockamalg uses dependency cache to speedup the amalgamation.
+
+You need to mount a volume into `/opt/rockamalg/.cache` to reuse cache between runs.
+
+Single run:
+
+```
+docker run --rm -it \
+	   -v $(pwd):/app \
+	   -v rockamalg-cache:/opt/rockamalg/.cache \
+	   enapter/rockamalg \
+	   amalg -o ucm.lua -d deps lua_dir
+```
+
+Server mode:
+
+```
+docker run --rm -d \
+	   -p 9090:9090 \
+	   -v rockamalg-cache:/opt/rockamalg/.cache \
+	   enapter/rockamalg \
+	   server -l 0.0.0.0:9090 -r 1s
+```
+
+### Known issues
+
+Sometimes running result file can cause an error like:
+
+```
+lua: main.lua:5: module 'mymode' not found:
+	no field package.preload['mymode']
+	no file '/opt/homebrew/share/lua/5.3/mymode.lua'
+	no file '/opt/homebrew/share/lua/5.3/mymode/init.lua'
+	no file '/opt/homebrew/lib/lua/5.3/mymode.lua'
+	no file '/opt/homebrew/lib/lua/5.3/mymode/init.lua'
+	no file './mymode.lua'
+	no file './mymode/init.lua'
+	no file '/opt/homebrew/lib/lua/5.3/mymode.so'
+	no file '/opt/homebrew/lib/lua/5.3/loadall.so'
+	no file './mymode.so'
+stack traceback:
+	[C]: in function 'require'
+	main.lua:5: in main chunk
+	ucm.lua:11: in main chunk
+	[C]: in ?
+```
+
+It means, that rockamalg failed to detect all required Lua modules. In that case run rockamalg in *isolate mode* using `-i` flag:
+
+```
+docker run --rm -it \
+	   -v $(pwd):/app \
+	   enapter/rockamalg \
+	   amalg -i -o ucm.lua -d deps lua_dir
+```
 
 ## Contributing
 ### Generate GRPC API

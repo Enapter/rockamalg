@@ -1,3 +1,7 @@
+# 0.7.0 (April 29, 2022)
+* Introduce requires analyzer.
+* Add ability to use rockamalg in isolate/non-isolate modes.
+
 # 0.6.3 (April 20, 2022)
 * Improve error messages after external command fails.
 
