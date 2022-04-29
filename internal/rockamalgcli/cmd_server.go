@@ -14,6 +14,7 @@ import (
 type cmdServer struct {
 	listenAddress string
 	retryTimeout  time.Duration
+	rocksServer   string
 }
 
 func buildCmdServer() *cli.Command {
@@ -39,6 +40,12 @@ func buildCmdServer() *cli.Command {
 				Destination: &cmd.retryTimeout,
 				Required:    true,
 			},
+			&cli.StringFlag{
+				Name:        "rocks-server",
+				Aliases:     []string{"s"},
+				Usage:       "Use custom rocks server",
+				Destination: &cmd.rocksServer,
+			},
 		},
 		Action: func(cliCtx *cli.Context) error {
 			gsrv := grpcserver.New(grpcserver.Params{
@@ -58,7 +65,7 @@ func buildCmdServer() *cli.Command {
 
 			fmt.Fprintf(cliCtx.App.Writer, "gRPC server starting at %s\n", cmd.listenAddress)
 
-			rockamalgrpc.RegisterRockamalgServer(gsrv, server.New())
+			rockamalgrpc.RegisterRockamalgServer(gsrv, server.New(cmd.rocksServer))
 			gsrv.Run(cliCtx.Context)
 
 			return nil

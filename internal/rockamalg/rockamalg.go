@@ -21,6 +21,7 @@ const cacheTree = "/opt/rockamalg/.cache"
 
 type Rockamalg struct {
 	rockspecTmpl  *template.Template
+	rocksServer   string
 	analyzer      *analyzer.Analyzer
 	commandExecMu sync.Mutex
 }
@@ -34,7 +35,7 @@ type Params struct {
 	Writer       io.Writer
 }
 
-func New() *Rockamalg {
+func New(rocksServer string) *Rockamalg {
 	tmpl := template.Must(template.New("<rockspec>").Parse(`
 rockspec_format = '3.0'
 package = 'generated'
@@ -52,6 +53,7 @@ dependencies = {
 
 	return &Rockamalg{
 		rockspecTmpl: tmpl,
+		rocksServer:  rocksServer,
 		analyzer:     analyzer.New(cacheTree),
 	}
 }
@@ -84,6 +86,7 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 	a := amalg{
 		p:            p,
 		rockspecTmpl: r.rockspecTmpl,
+		rocksServer:  r.rocksServer,
 		runCmd:       runCmdSync,
 		analyzer:     r.analyzer,
 	}
@@ -100,6 +103,7 @@ type amalg struct {
 	isolatedTree string
 	modules      []string
 	rockspecTmpl *template.Template
+	rocksServer  string
 	cleanupFns   []func()
 	analyzer     *analyzer.Analyzer
 	runCmd       func(cmd *exec.Cmd) (*bytes.Buffer, error)
@@ -219,7 +223,12 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 		return errRockspecIsNotRegularFile
 	}
 
-	cmd := a.buildLuaRocksCommand(ctx, "install", "--only-deps", a.p.Rockspec)
+	args := []string{"install", "--only-deps", a.p.Rockspec}
+	if a.rocksServer != "" {
+		args = append(args, "--only-server="+a.rocksServer)
+	}
+
+	cmd := a.buildLuaRocksCommand(ctx, args...)
 	if _, err := a.runCmd(cmd); err != nil {
 		return fmt.Errorf("run luarocks install: %w", err)
 	}

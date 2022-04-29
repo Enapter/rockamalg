@@ -9,11 +9,12 @@ import (
 )
 
 type cmdAmalg struct {
-	deps     string
-	rockspec string
-	output   string
-	lua      string
-	isolate  bool
+	deps        string
+	rockspec    string
+	output      string
+	lua         string
+	isolate     bool
+	rocksServer string
 }
 
 //nolint:funlen // large number of flags
@@ -57,6 +58,12 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 				Usage:       "Enable isolate mode",
 				Destination: &cmd.isolate,
 			},
+			&cli.StringFlag{
+				Name:        "rocks-server",
+				Aliases:     []string{"s"},
+				Usage:       "Use custom rocks server",
+				Destination: &cmd.rocksServer,
+			},
 		},
 		Before: func(cliCtx *cli.Context) error {
 			if filepath.IsAbs(cmd.output) {
@@ -68,7 +75,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 			return nil
 		},
 		Action: func(cliCtx *cli.Context) error {
-			return rockamalg.New().
+			return rockamalg.New(cmd.rocksServer).
 				Amalg(cliCtx.Context,
 					rockamalg.Params{
 						Dependencies: cmd.deps,
