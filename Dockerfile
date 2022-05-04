@@ -28,4 +28,8 @@ RUN luarocks install amalg 0.8-1
 RUN mkdir /opt/rockamalg
 COPY --from=builder /app/bin/rockamalg /opt/rockamalg/rockamalg
 
+RUN mkdir /opt/tools
+COPY pack_rocks.sh /opt/tools/pack_rocks.sh
+RUN chmod +x /opt/tools/pack_rocks.sh
+
 ENTRYPOINT ["/opt/rockamalg/rockamalg"]
