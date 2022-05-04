@@ -5,6 +5,7 @@ package integration_test
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,16 +17,23 @@ import (
 
 func TestAmalgCommand(t *testing.T) {
 	t.Parallel()
-	files, err := os.ReadDir("testdata/amalg")
+
+	testAmalg(t, "testdata/amalg")
+}
+
+func testAmalg(t *testing.T, testdataDir string) {
+	t.Helper()
+
+	files, err := os.ReadDir(testdataDir)
 	require.NoError(t, err)
 
 	for _, fi := range files {
 		fi := fi
 		for _, isolate := range []bool{false, true} {
 			isolate := isolate
-			t.Run(fi.Name(), func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s isolate %v", fi.Name(), isolate), func(t *testing.T) {
 				t.Parallel()
-				testOpts := buildTestOpts(t, fi.Name(), isolate)
+				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate)
 
 				stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
 				checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
@@ -51,7 +59,7 @@ type testOpts struct {
 }
 
 //nolint:funlen // setup a large number of fields
-func buildTestOpts(t *testing.T, name string, isolate bool) testOpts {
+func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool) testOpts {
 	t.Helper()
 
 	o := out{lua: "out.lua", stdout: "stdout"}
@@ -59,7 +67,7 @@ func buildTestOpts(t *testing.T, name string, isolate bool) testOpts {
 		o.SetIsolateOut()
 	}
 
-	testdataPath := filepath.Join("testdata/amalg", name)
+	testdataPath := filepath.Join(testdataDir, name)
 
 	outLuaFile, err := os.CreateTemp(testdataPath, "out_*.lua")
 	require.NoError(t, err)
@@ -76,7 +84,8 @@ func buildTestOpts(t *testing.T, name string, isolate bool) testOpts {
 	require.NoError(t, err)
 
 	amalgArgs := []string{
-		"run", "--pull", "never", "--rm", "-v", curdir + ":/app", "enapter/rockamalg",
+		"run", "--pull", "never", "--rm",
+		"-v", curdir + ":/app", "enapter/rockamalg",
 		"amalg", "-o", outLuaFile.Name(),
 	}
 
