@@ -26,7 +26,13 @@ import (
 func TestServer(t *testing.T) {
 	t.Parallel()
 
-	files, err := os.ReadDir("testdata/amalg")
+	testServer(t, "testdata/amalg")
+}
+
+func testServer(t *testing.T, testdataDir string) {
+	t.Helper()
+
+	files, err := os.ReadDir(testdataDir)
 	require.NoError(t, err)
 
 	cli := runServerAndConnect(t)
@@ -37,7 +43,7 @@ func TestServer(t *testing.T) {
 			isolate := isolate
 			t.Run(fmt.Sprintf("%s isolate %v", fi.Name(), isolate), func(t *testing.T) {
 				t.Parallel()
-				testOpts := buildTestOpts(t, fi.Name(), isolate)
+				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate)
 				req := buildReq(t, testOpts, isolate)
 
 				resp, err := cli.Amalg(context.Background(), req)
