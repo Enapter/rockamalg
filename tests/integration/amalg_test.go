@@ -15,13 +15,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAmalgCommand(t *testing.T) {
+type rockstype int
+
+const (
+	publicRocks rockstype = iota
+	privateRocks
+)
+
+func TestAmalgCommandPublicRocks(t *testing.T) {
 	t.Parallel()
 
-	testAmalg(t, "testdata/amalg")
+	testAmalg(t, "testdata/amalg", publicRocks)
 }
 
-func testAmalg(t *testing.T, testdataDir string) {
+func TestAmalgCommandPrivateRocks(t *testing.T) {
+	t.Parallel()
+
+	testAmalg(t, "testdata/amalg-private", privateRocks)
+}
+
+func testAmalg(t *testing.T, testdataDir string, rt rockstype) {
 	t.Helper()
 
 	files, err := os.ReadDir(testdataDir)
@@ -33,7 +46,7 @@ func testAmalg(t *testing.T, testdataDir string) {
 			isolate := isolate
 			t.Run(fmt.Sprintf("%s isolate %v", fi.Name(), isolate), func(t *testing.T) {
 				t.Parallel()
-				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate)
+				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, rt)
 
 				stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
 				checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
@@ -59,7 +72,7 @@ type testOpts struct {
 }
 
 //nolint:funlen // setup a large number of fields
-func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool) testOpts {
+func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool, rt rockstype) testOpts {
 	t.Helper()
 
 	o := out{lua: "out.lua", stdout: "stdout"}
@@ -85,9 +98,14 @@ func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool) 
 
 	amalgArgs := []string{
 		"run", "--pull", "never", "--rm",
-		"-v", curdir + ":/app", "enapter/rockamalg",
-		"amalg", "-o", outLuaFile.Name(),
+		"-v", curdir + ":/app",
 	}
+	if rt == privateRocks {
+		amalgArgs = append(amalgArgs,
+			"-v", filepath.Join(curdir, "testdata/rocks")+":/opt/rocks",
+		)
+	}
+	amalgArgs = append(amalgArgs, "enapter/rockamalg", "amalg", "-o", outLuaFile.Name())
 
 	depsFileName := filepath.Join(testdataPath, "deps")
 	if isExist(t, depsFileName) {
@@ -105,6 +123,10 @@ func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool) 
 
 	if isolate {
 		amalgArgs = append(amalgArgs, "-i")
+	}
+
+	if rt == privateRocks {
+		amalgArgs = append(amalgArgs, "--rocks-server", "/opt/rocks")
 	}
 
 	amalgArgs = append(amalgArgs, filepath.Join(testdataPath, luaName))

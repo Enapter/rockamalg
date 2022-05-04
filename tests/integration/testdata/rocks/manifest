@@ -1,0 +1,11 @@
+commands = {}
+modules = {}
+repository = {
+   inspect = {
+      ["3.1.2-0"] = {
+         {
+            arch = "all"
+         }
+      }
+   }
+}

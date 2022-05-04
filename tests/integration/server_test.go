@@ -23,19 +23,27 @@ import (
 	"github.com/enapter/rockamalg/internal/api/rockamalgrpc"
 )
 
-func TestServer(t *testing.T) {
+func TestServerPublicRocks(t *testing.T) {
 	t.Parallel()
 
-	testServer(t, "testdata/amalg")
+	const port = 9090
+	testServer(t, "testdata/amalg", port, publicRocks)
 }
 
-func testServer(t *testing.T, testdataDir string) {
+func TestServerPrivateRocks(t *testing.T) {
+	t.Parallel()
+
+	const port = 9091
+	testServer(t, "testdata/amalg-private", port, privateRocks)
+}
+
+func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
 	t.Helper()
 
 	files, err := os.ReadDir(testdataDir)
 	require.NoError(t, err)
 
-	cli := runServerAndConnect(t)
+	cli := runServerAndConnect(t, port, rt)
 
 	for _, fi := range files {
 		fi := fi
@@ -43,7 +51,7 @@ func testServer(t *testing.T, testdataDir string) {
 			isolate := isolate
 			t.Run(fmt.Sprintf("%s isolate %v", fi.Name(), isolate), func(t *testing.T) {
 				t.Parallel()
-				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate)
+				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, rt)
 				req := buildReq(t, testOpts, isolate)
 
 				resp, err := cli.Amalg(context.Background(), req)
@@ -80,11 +88,24 @@ func buildReq(t *testing.T, opts testOpts, isolate bool) *rockamalgrpc.AmalgRequ
 	return req
 }
 
-func runServerAndConnect(t *testing.T) rockamalgrpc.RockamalgClient {
+func runServerAndConnect(t *testing.T, port int, rt rockstype) rockamalgrpc.RockamalgClient {
 	t.Helper()
 
-	output := execDockerCommand(t, "run", "--rm", "--pull", "never", "--detach", "-p", "9090:9090",
-		"enapter/rockamalg", "server", "-l", "0.0.0.0:9090", "-r", "1s")
+	args := []string{"run", "--rm", "--pull", "never", "--detach", "-p", fmt.Sprintf("%d:9090", port)}
+	if rt == privateRocks {
+		curdir, err := os.Getwd()
+		require.NoError(t, err)
+
+		args = append(args,
+			"-v", filepath.Join(curdir, "testdata/rocks")+":/opt/rocks",
+		)
+	}
+	args = append(args, "enapter/rockamalg", "server", "-l", "0.0.0.0:9090", "-r", "1s")
+	if rt == privateRocks {
+		args = append(args, "--rocks-server", "/opt/rocks")
+	}
+
+	output := execDockerCommand(t, args...)
 	containerID := strings.TrimSpace(string(output))
 	t.Cleanup(func() {
 		execDockerCommand(t, "stop", containerID)
@@ -93,7 +114,10 @@ func runServerAndConnect(t *testing.T) rockamalgrpc.RockamalgClient {
 		t.Logf("rockamalg logs: %s", execDockerCommand(t, "logs", containerID))
 	})
 
-	conn, err := grpc.Dial("127.0.0.1:9090", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(
+		fmt.Sprintf("127.0.0.1:%d", port),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	require.NoError(t, err)
 
 	cli := rockamalgrpc.NewRockamalgClient(conn)
