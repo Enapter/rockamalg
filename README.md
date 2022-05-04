@@ -143,3 +143,12 @@ To generate GRPC API use the following command:
 ```
 ./scripts/gogen.sh go generate -v ./internal/api/rockamalgrpc/generate.go
 ```
+### Pack test rocks
+To pack rocks for integration tests use the `pack_rocks.sh` script:
+```
+docker run --rm \
+	   -v $(pwd)/tests/integration/testdata/rocks:/opt/res \
+	   --entrypoint /opt/tools/pack_rocks.sh \
+	   enapter/rockamalg \
+	   inspect@3.1.2
+```
