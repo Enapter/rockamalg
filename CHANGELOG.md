@@ -1,3 +1,6 @@
+# 0.8.1 (May 5, 2022)
+* Fix pack_rocks script.
+
 # 0.8.0 (May 5, 2022)
 * Allow to use rockamalg with private rocks server.
 
