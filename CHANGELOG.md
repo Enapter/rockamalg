@@ -1,3 +1,6 @@
+# 0.8.0 (May 5, 2022)
+* Allow to use rockamalg with private rocks server.
+
 # 0.7.0 (April 29, 2022)
 * Introduce requires analyzer.
 * Add ability to use rockamalg in isolate/non-isolate modes.
