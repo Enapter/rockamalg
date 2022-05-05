@@ -2,19 +2,16 @@
 
 set -eux
 
-out_dir="/opt/res"
-cd $out_dir
+apk add zip
 
-install_cmd=""
-pack_cmd=""
-sep=""
+out_dir="/opt/res"
+mkdir -p $out_dir && cd $out_dir
 
 for arg in "$@"
 do
     rock=${arg//@/ }
-    install_cmd+=" $sep luarocks install --keep $rock"
-    pack_cmd+=" $sep luarocks pack $rock"
-    sep="&&"
+    luarocks install $rock
+    luarocks pack $rock
 done
 
-apk add zip && $install_cmd && $pack_cmd && luarocks-admin make-manifest $out_dir
+luarocks-admin make-manifest $out_dir
