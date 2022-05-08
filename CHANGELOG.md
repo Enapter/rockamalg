@@ -1,3 +1,6 @@
+# 0.8.2 (May 11, 2022)
+* Cleanup amalgamated output for non-isolated mode.
+
 # 0.8.1 (May 5, 2022)
 * Fix pack_rocks script.
 
