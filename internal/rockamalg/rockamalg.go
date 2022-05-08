@@ -100,7 +100,7 @@ type amalg struct {
 	luaDir       string
 	luaMain      string
 	singleFile   bool
-	isolatedTree string
+	tree         string
 	modules      []string
 	rockspecTmpl *template.Template
 	rocksServer  string
@@ -134,10 +134,8 @@ func (a *amalg) Do(ctx context.Context) error {
 		return fmt.Errorf("amalgamate: %w", err)
 	}
 
-	if a.p.Isolate {
-		if err := a.wrapWithMsg(a.cleanupResult, "Cleaning up result")(ctx); err != nil {
-			return fmt.Errorf("clean up result: %w", err)
-		}
+	if err := a.wrapWithMsg(a.cleanupResult, "Cleaning up result")(ctx); err != nil {
+		return fmt.Errorf("clean up result: %w", err)
 	}
 
 	return nil
@@ -150,7 +148,9 @@ func (a *amalg) setupConfig(ctx context.Context) error {
 			return fmt.Errorf("mkdir temp: %w", err)
 		}
 		a.cleanupFns = append(a.cleanupFns, func() { os.RemoveAll(tmpDir) })
-		a.isolatedTree = tmpDir
+		a.tree = tmpDir
+	} else {
+		a.tree = cacheTree
 	}
 
 	if !filepath.IsAbs(a.p.Output) {
@@ -267,10 +267,6 @@ func (a *amalg) amalgamate(ctx context.Context) error {
 }
 
 func (a *amalg) cleanupResult(ctx context.Context) error {
-	if a.isolatedTree == "" {
-		return nil
-	}
-
 	f, err := os.OpenFile(a.p.Output, os.O_RDWR, 0)
 	if err != nil {
 		return fmt.Errorf("open: %w", err)
@@ -281,7 +277,7 @@ func (a *amalg) cleanupResult(ctx context.Context) error {
 		return fmt.Errorf("read: %w", err)
 	}
 
-	buf = bytes.ReplaceAll(buf, []byte(a.isolatedTree), []byte("/usr/local"))
+	buf = bytes.ReplaceAll(buf, []byte(a.tree), []byte("/usr/local"))
 
 	if err := f.Truncate(0); err != nil {
 		return fmt.Errorf("truncate: %w", err)
@@ -386,13 +382,7 @@ func (a *amalg) gatherLuaDirectory(context.Context) error {
 }
 
 func (a *amalg) buildLuaRocksCommand(ctx context.Context, args ...string) *exec.Cmd {
-	var tree string
-	if a.isolatedTree != "" {
-		tree = a.isolatedTree
-	} else {
-		tree = cacheTree
-	}
-	args = append([]string{"--tree", tree}, args...)
+	args = append([]string{"--tree", a.tree}, args...)
 	return exec.CommandContext(ctx, "luarocks", args...)
 }
 
