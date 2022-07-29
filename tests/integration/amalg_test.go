@@ -5,7 +5,6 @@ package integration_test
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -42,23 +41,28 @@ func testAmalg(t *testing.T, testdataDir string, rt rockstype) {
 
 	for _, fi := range files {
 		fi := fi
-		for _, isolate := range []bool{false, true} {
-			testName := fi.Name()
-			if isolate {
-				testName += "_isolated"
+		for _, nodebug := range []bool{false, true} {
+			for _, isolate := range []bool{false, true} {
+				testName := fi.Name()
+				if isolate {
+					testName += "_isolated"
+				}
+				if nodebug {
+					testName += "_nodebug"
+				}
+
+				t.Run(testName, func(t *testing.T) {
+					t.Parallel()
+					testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, nodebug, rt)
+
+					stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
+					checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
+					checkExpectedWithFile(t, testOpts.expectedLua, testOpts.outLuaFileName)
+
+					stdoutBytes = execDockerCommand(t, testOpts.luaExecArgs...)
+					checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
+				})
 			}
-
-			t.Run(testName, func(t *testing.T) {
-				t.Parallel()
-				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, rt)
-
-				stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
-				checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
-				checkExpectedWithFile(t, testOpts.expectedLua, testOpts.outLuaFileName)
-
-				stdoutBytes = execDockerCommand(t, testOpts.luaExecArgs...)
-				checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
-			})
 		}
 	}
 }
@@ -73,15 +77,21 @@ type testOpts struct {
 	luaPath          string
 	depsFileName     string
 	rockspecFileName string
+	disableDebug     bool
 }
 
 //nolint:funlen // setup a large number of fields
-func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool, rt rockstype) testOpts {
+func buildTestOpts(
+	t *testing.T, name string, testdataDir string, isolate, nodebug bool, rt rockstype,
+) testOpts {
 	t.Helper()
 
 	o := out{lua: "out.lua", stdout: "stdout"}
 	if isolate {
 		o.SetOutPrefix("isolated")
+	}
+	if nodebug {
+		o.SetOutPrefix("nodebug")
 	}
 
 	testdataPath := filepath.Join(testdataDir, name)
@@ -129,6 +139,10 @@ func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool, 
 		amalgArgs = append(amalgArgs, "-i")
 	}
 
+	if nodebug {
+		amalgArgs = append(amalgArgs, "--disable-debug")
+	}
+
 	if rt == privateRocks {
 		amalgArgs = append(amalgArgs, "--rocks-server", "/opt/rocks")
 	}
@@ -151,6 +165,7 @@ func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool, 
 		luaPath:          filepath.Join(testdataPath, luaName),
 		depsFileName:     depsFileName,
 		rockspecFileName: rockspecFileName,
+		disableDebug:     nodebug,
 	}
 }
 

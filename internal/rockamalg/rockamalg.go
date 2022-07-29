@@ -32,6 +32,7 @@ type Params struct {
 	Lua          string
 	Output       string
 	Isolate      bool
+	DisableDebug bool
 	Writer       io.Writer
 }
 
@@ -248,7 +249,10 @@ func (a *amalg) calculateRequires(ctx context.Context) error {
 }
 
 func (a *amalg) amalgamate(ctx context.Context) error {
-	args := []string{"--debug", "-o", a.p.Output, "-s", a.luaMain}
+	args := []string{"-o", a.p.Output, "-s", a.luaMain}
+	if !a.p.DisableDebug {
+		args = append(args, "--debug")
+	}
 	args = append(args, a.modules...)
 	cmd := exec.CommandContext(ctx, "amalg.lua", args...)
 	cmd.Dir = a.luaDir

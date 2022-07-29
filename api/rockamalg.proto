@@ -18,6 +18,7 @@ message AmalgRequest {
     repeated string dependencies = 3;
     bytes rockspec = 4;
     bool isolate = 5;
+    bool disable_debug = 6;
 }
 
 message AmalgResponse {

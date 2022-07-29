@@ -57,8 +57,9 @@ func (s *Server) Amalg(
 	defer func() { os.RemoveAll(amalgDir) }()
 
 	amalgParams := rockamalg.Params{
-		Output:  filepath.Join(amalgDir, "out.lua"),
-		Isolate: req.Isolate,
+		Output:       filepath.Join(amalgDir, "out.lua"),
+		Isolate:      req.GetIsolate(),
+		DisableDebug: req.GetDisableDebug(),
 	}
 
 	if len(req.GetDependencies()) != 0 {

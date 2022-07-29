@@ -1,3 +1,6 @@
+# 0.9.0 (July 28, 2022)
+* Allow to amalgamate without debug information.
+
 # 0.8.2 (May 11, 2022)
 * Cleanup amalgamated output for non-isolated mode.
 

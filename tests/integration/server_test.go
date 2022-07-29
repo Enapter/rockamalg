@@ -47,26 +47,32 @@ func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
 
 	for _, fi := range files {
 		fi := fi
-		for _, isolate := range []bool{false, true} {
-			isolate := isolate
-			testName := fi.Name()
-			if isolate {
-				testName += "_isolated"
+		for _, nodebug := range []bool{false, true} {
+			for _, isolate := range []bool{false, true} {
+				isolate := isolate
+				nodebug := nodebug
+				testName := fi.Name()
+				if isolate {
+					testName += "_isolated"
+				}
+				if nodebug {
+					testName += "_nodebug"
+				}
+
+				t.Run(testName, func(t *testing.T) {
+					t.Parallel()
+					testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, nodebug, rt)
+					req := buildReq(t, testOpts, isolate)
+
+					resp, err := cli.Amalg(context.Background(), req)
+					require.NoError(t, err)
+
+					checkExpectedWithBytes(t, testOpts.expectedLua, resp.GetLua())
+
+					stdoutBytes := execDockerCommand(t, testOpts.luaExecArgs...)
+					checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
+				})
 			}
-
-			t.Run(testName, func(t *testing.T) {
-				t.Parallel()
-				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, rt)
-				req := buildReq(t, testOpts, isolate)
-
-				resp, err := cli.Amalg(context.Background(), req)
-				require.NoError(t, err)
-
-				checkExpectedWithBytes(t, testOpts.expectedLua, resp.GetLua())
-
-				stdoutBytes := execDockerCommand(t, testOpts.luaExecArgs...)
-				checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
-			})
 		}
 	}
 }
@@ -74,7 +80,7 @@ func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
 func buildReq(t *testing.T, opts testOpts, isolate bool) *rockamalgrpc.AmalgRequest {
 	t.Helper()
 
-	req := &rockamalgrpc.AmalgRequest{Isolate: isolate}
+	req := &rockamalgrpc.AmalgRequest{Isolate: isolate, DisableDebug: opts.disableDebug}
 
 	if isDirectory(t, opts.luaPath) {
 		req.LuaDir = zipDir(t, opts.luaPath)

@@ -9,12 +9,13 @@ import (
 )
 
 type cmdAmalg struct {
-	deps        string
-	rockspec    string
-	output      string
-	lua         string
-	isolate     bool
-	rocksServer string
+	deps         string
+	rockspec     string
+	output       string
+	lua          string
+	isolate      bool
+	disableDebug bool
+	rocksServer  string
 }
 
 //nolint:funlen // large number of flags
@@ -58,6 +59,11 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 				Usage:       "Enable isolate mode",
 				Destination: &cmd.isolate,
 			},
+			&cli.BoolFlag{
+				Name:        "disable-debug",
+				Usage:       "Disable debug mode",
+				Destination: &cmd.disableDebug,
+			},
 			&cli.StringFlag{
 				Name:        "rocks-server",
 				Aliases:     []string{"s"},
@@ -84,6 +90,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 						Output:       cmd.output,
 						Writer:       cliCtx.App.Writer,
 						Isolate:      cmd.isolate,
+						DisableDebug: cmd.disableDebug,
 					})
 		},
 	}
