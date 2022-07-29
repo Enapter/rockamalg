@@ -43,8 +43,12 @@ func testAmalg(t *testing.T, testdataDir string, rt rockstype) {
 	for _, fi := range files {
 		fi := fi
 		for _, isolate := range []bool{false, true} {
-			isolate := isolate
-			t.Run(fmt.Sprintf("%s isolate %v", fi.Name(), isolate), func(t *testing.T) {
+			testName := fi.Name()
+			if isolate {
+				testName += "_isolated"
+			}
+
+			t.Run(testName, func(t *testing.T) {
 				t.Parallel()
 				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, rt)
 
@@ -77,7 +81,7 @@ func buildTestOpts(t *testing.T, name string, testdataDir string, isolate bool, 
 
 	o := out{lua: "out.lua", stdout: "stdout"}
 	if isolate {
-		o.SetIsolateOut()
+		o.SetOutPrefix("isolated")
 	}
 
 	testdataPath := filepath.Join(testdataDir, name)
@@ -155,10 +159,9 @@ type out struct {
 	stdout string
 }
 
-func (o *out) SetIsolateOut() {
-	const pref = "isolated."
-	o.lua = pref + o.lua
-	o.stdout = pref + o.stdout
+func (o *out) SetOutPrefix(prefix string) {
+	o.lua = prefix + "." + o.lua
+	o.stdout = prefix + "." + o.stdout
 }
 
 func execDockerCommand(t *testing.T, args ...string) []byte {

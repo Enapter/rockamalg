@@ -49,7 +49,12 @@ func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
 		fi := fi
 		for _, isolate := range []bool{false, true} {
 			isolate := isolate
-			t.Run(fmt.Sprintf("%s isolate %v", fi.Name(), isolate), func(t *testing.T) {
+			testName := fi.Name()
+			if isolate {
+				testName += "_isolated"
+			}
+
+			t.Run(testName, func(t *testing.T) {
 				t.Parallel()
 				testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, rt)
 				req := buildReq(t, testOpts, isolate)
