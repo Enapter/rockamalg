@@ -5,6 +5,7 @@ package integration_test
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,32 +40,55 @@ func testAmalg(t *testing.T, testdataDir string, rt rockstype) {
 	files, err := os.ReadDir(testdataDir)
 	require.NoError(t, err)
 
+	for _, test := range generateAmalgTests(files) {
+		test := test
+		t.Run(test.PrettyName(), func(t *testing.T) {
+			t.Parallel()
+			testOpts := buildTestOpts(t, testdataDir, rt, test)
+
+			stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
+			checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
+			checkExpectedWithFile(t, testOpts.expectedLua, testOpts.outLuaFileName)
+
+			stdoutBytes = execDockerCommand(t, testOpts.luaExecArgs...)
+			checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
+		})
+	}
+}
+
+type amalgtest struct {
+	name    string
+	isolate bool
+	nodebug bool
+}
+
+func (t amalgtest) PrettyName() string {
+	name := t.name
+	if t.isolate {
+		name += "_isolated"
+	}
+	if t.nodebug {
+		name += "_nodebug"
+	}
+
+	return name
+}
+
+func generateAmalgTests(files []fs.DirEntry) []amalgtest {
+	var tests []amalgtest
 	for _, fi := range files {
-		fi := fi
 		for _, nodebug := range []bool{false, true} {
 			for _, isolate := range []bool{false, true} {
-				testName := fi.Name()
-				if isolate {
-					testName += "_isolated"
-				}
-				if nodebug {
-					testName += "_nodebug"
-				}
-
-				t.Run(testName, func(t *testing.T) {
-					t.Parallel()
-					testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, nodebug, rt)
-
-					stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
-					checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
-					checkExpectedWithFile(t, testOpts.expectedLua, testOpts.outLuaFileName)
-
-					stdoutBytes = execDockerCommand(t, testOpts.luaExecArgs...)
-					checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
+				tests = append(tests, amalgtest{
+					name:    fi.Name(),
+					isolate: isolate,
+					nodebug: nodebug,
 				})
 			}
 		}
 	}
+
+	return tests
 }
 
 type testOpts struct {
@@ -82,19 +106,19 @@ type testOpts struct {
 
 //nolint:funlen // setup a large number of fields
 func buildTestOpts(
-	t *testing.T, name string, testdataDir string, isolate, nodebug bool, rt rockstype,
+	t *testing.T, testdataDir string, rt rockstype, test amalgtest,
 ) testOpts {
 	t.Helper()
 
 	o := out{lua: "out.lua", stdout: "stdout"}
-	if isolate {
+	if test.isolate {
 		o.SetOutPrefix("isolated")
 	}
-	if nodebug {
+	if test.nodebug {
 		o.SetOutPrefix("nodebug")
 	}
 
-	testdataPath := filepath.Join(testdataDir, name)
+	testdataPath := filepath.Join(testdataDir, test.name)
 
 	outLuaFile, err := os.CreateTemp(testdataPath, "out_*.lua")
 	require.NoError(t, err)
@@ -128,18 +152,18 @@ func buildTestOpts(
 		depsFileName = ""
 	}
 
-	rockspecFileName := filepath.Join(testdataPath, name+"-dev-1.rockspec")
+	rockspecFileName := filepath.Join(testdataPath, test.name+"-dev-1.rockspec")
 	if isExist(t, rockspecFileName) {
 		amalgArgs = append(amalgArgs, "-r", rockspecFileName)
 	} else {
 		rockspecFileName = ""
 	}
 
-	if isolate {
+	if test.isolate {
 		amalgArgs = append(amalgArgs, "-i")
 	}
 
-	if nodebug {
+	if test.nodebug {
 		amalgArgs = append(amalgArgs, "--disable-debug")
 	}
 
@@ -165,7 +189,7 @@ func buildTestOpts(
 		luaPath:          filepath.Join(testdataPath, luaName),
 		depsFileName:     depsFileName,
 		rockspecFileName: rockspecFileName,
-		disableDebug:     nodebug,
+		disableDebug:     test.nodebug,
 	}
 }
 

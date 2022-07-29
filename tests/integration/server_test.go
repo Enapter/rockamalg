@@ -45,35 +45,21 @@ func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
 
 	cli := runServerAndConnect(t, port, rt)
 
-	for _, fi := range files {
-		fi := fi
-		for _, nodebug := range []bool{false, true} {
-			for _, isolate := range []bool{false, true} {
-				isolate := isolate
-				nodebug := nodebug
-				testName := fi.Name()
-				if isolate {
-					testName += "_isolated"
-				}
-				if nodebug {
-					testName += "_nodebug"
-				}
+	for _, test := range generateAmalgTests(files) {
+		test := test
+		t.Run(test.PrettyName(), func(t *testing.T) {
+			t.Parallel()
+			testOpts := buildTestOpts(t, testdataDir, rt, test)
+			req := buildReq(t, testOpts, test.isolate)
 
-				t.Run(testName, func(t *testing.T) {
-					t.Parallel()
-					testOpts := buildTestOpts(t, fi.Name(), testdataDir, isolate, nodebug, rt)
-					req := buildReq(t, testOpts, isolate)
+			resp, err := cli.Amalg(context.Background(), req)
+			require.NoError(t, err)
 
-					resp, err := cli.Amalg(context.Background(), req)
-					require.NoError(t, err)
+			checkExpectedWithBytes(t, testOpts.expectedLua, resp.GetLua())
 
-					checkExpectedWithBytes(t, testOpts.expectedLua, resp.GetLua())
-
-					stdoutBytes := execDockerCommand(t, testOpts.luaExecArgs...)
-					checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
-				})
-			}
-		}
+			stdoutBytes := execDockerCommand(t, testOpts.luaExecArgs...)
+			checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
+		})
 	}
 }
 
