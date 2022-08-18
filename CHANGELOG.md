@@ -1,3 +1,6 @@
+# 0.9.1 (August 18, 2022)
+* Fix vulnerabilities.
+
 # 0.9.0 (July 28, 2022)
 * Allow to amalgamate without debug information.
 
