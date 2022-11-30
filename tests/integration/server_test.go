@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -35,6 +36,49 @@ func TestServerPrivateRocks(t *testing.T) {
 
 	const port = 9091
 	testServer(t, "testdata/amalg-private", port, privateRocks)
+}
+
+func TestServerDevDeps(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		allowDevDeps bool
+	}{
+		{name: "without dev deps"},
+		{name: "with dev deps", allowDevDeps: true},
+	}
+
+	const port = 9092
+	cli := runServerAndConnect(t, port, devRocksTest)
+
+	testdataPath := "testdata/amalg-dev"
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := buildReq(t, testOpts{
+				luaPath:      filepath.Join(testdataPath, "test.lua"),
+				depsFileName: filepath.Join(testdataPath, "deps"),
+			}, false)
+
+			expectedStdout := filepath.Join(testdataPath, "rpc.err")
+			if tc.allowDevDeps {
+				req.AllowDevDependencies = true
+				expectedStdout += ".dev"
+			}
+
+			_, err := cli.Amalg(context.Background(), req)
+			require.Error(t, err)
+
+			fixErrorTextRe := regexp.MustCompile(`genrockspec\d+`)
+			actualErrorText := fixErrorTextRe.ReplaceAllString(err.Error(), "genrockspec")
+
+			checkExpectedWithBytes(t, expectedStdout, []byte(actualErrorText))
+		})
+	}
 }
 
 func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
@@ -96,7 +140,15 @@ func runServerAndConnect(t *testing.T, port int, rt rockstype) rockamalgrpc.Rock
 		args = append(args,
 			"-v", filepath.Join(curdir, "testdata/rocks")+":/opt/rocks",
 		)
+	} else if rt == devRocksTest {
+		curdir, err := os.Getwd()
+		require.NoError(t, err)
+
+		args = append(args,
+			"-v", filepath.Join(curdir, "testdata/amalg-dev/luarocks")+":/usr/local/bin/luarocks",
+		)
 	}
+
 	args = append(args, "enapter/rockamalg", "server", "-l", "0.0.0.0:9090", "-r", "1s")
 	if rt == privateRocks {
 		args = append(args, "--rocks-server", "/opt/rocks")

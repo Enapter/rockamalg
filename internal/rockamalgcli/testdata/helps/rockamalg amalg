@@ -17,6 +17,7 @@ OPTIONS:
    --output value, -o value        Output Lua file name
    --isolate, -i                   Enable isolate mode (default: false)
    --disable-debug                 Disable debug mode (default: false)
+   --allow-dev-dependencies        Allow to use dev dependencies (default: false)
    --rocks-server value, -s value  Use custom rocks server
    --help, -h                      show help (default: false)
    

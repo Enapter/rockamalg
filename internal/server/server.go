@@ -60,6 +60,7 @@ func (s *Server) Amalg(
 		Output:       filepath.Join(amalgDir, "out.lua"),
 		Isolate:      req.GetIsolate(),
 		DisableDebug: req.GetDisableDebug(),
+		AllowDevDeps: req.GetAllowDevDependencies(),
 	}
 
 	if len(req.GetDependencies()) != 0 {

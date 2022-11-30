@@ -19,6 +19,7 @@ message AmalgRequest {
     bytes rockspec = 4;
     bool isolate = 5;
     bool disable_debug = 6;
+    bool allow_dev_dependencies = 7;
 }
 
 message AmalgResponse {
