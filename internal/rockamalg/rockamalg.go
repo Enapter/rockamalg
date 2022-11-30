@@ -33,6 +33,7 @@ type Params struct {
 	Output       string
 	Isolate      bool
 	DisableDebug bool
+	AllowDevDeps bool
 	Writer       io.Writer
 }
 
@@ -227,6 +228,10 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 	args := []string{"install", "--only-deps", a.p.Rockspec}
 	if a.rocksServer != "" {
 		args = append(args, "--only-server="+a.rocksServer)
+	}
+
+	if a.p.AllowDevDeps {
+		args = append(args, "--dev")
 	}
 
 	cmd := a.buildLuaRocksCommand(ctx, args...)

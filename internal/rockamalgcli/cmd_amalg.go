@@ -15,6 +15,7 @@ type cmdAmalg struct {
 	lua          string
 	isolate      bool
 	disableDebug bool
+	allowDevDeps bool
 	rocksServer  string
 }
 
@@ -64,6 +65,11 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 				Usage:       "Disable debug mode",
 				Destination: &cmd.disableDebug,
 			},
+			&cli.BoolFlag{
+				Name:        "allow-dev-dependencies",
+				Usage:       "Allow to use dev dependencies",
+				Destination: &cmd.allowDevDeps,
+			},
 			&cli.StringFlag{
 				Name:        "rocks-server",
 				Aliases:     []string{"s"},
@@ -91,6 +97,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 						Writer:       cliCtx.App.Writer,
 						Isolate:      cmd.isolate,
 						DisableDebug: cmd.disableDebug,
+						AllowDevDeps: cmd.allowDevDeps,
 					})
 		},
 	}

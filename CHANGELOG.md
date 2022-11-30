@@ -1,3 +1,6 @@
+# 0.10.0 (November 30, 2022)
+* Allow to use dev dependencies from luarocks.
+
 # 0.9.1 (August 18, 2022)
 * Fix vulnerabilities.
 

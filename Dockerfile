@@ -12,7 +12,7 @@ WORKDIR /app
 
 RUN apk add --no-cache \
         bash build-base lua5.3 lua5.3-dev openssl \
-        wget unzip zlib=1.2.12-r3
+        wget unzip zlib=1.2.12-r3 git
 
 RUN wget https://luarocks.org/releases/luarocks-3.8.0.tar.gz && \
     tar zxpf luarocks-3.8.0.tar.gz && \

@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -20,6 +21,7 @@ type rockstype int
 const (
 	publicRocks rockstype = iota
 	privateRocks
+	devRocksTest
 )
 
 func TestAmalgCommandPublicRocks(t *testing.T) {
@@ -32,6 +34,58 @@ func TestAmalgCommandPrivateRocks(t *testing.T) {
 	t.Parallel()
 
 	testAmalg(t, "testdata/amalg-private", privateRocks)
+}
+
+func TestAmalgDevDeps(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		allowDevDeps bool
+	}{
+		{name: "without dev deps"},
+		{name: "with dev deps", allowDevDeps: true},
+	}
+
+	testdataPath := "testdata/amalg-dev"
+	curdir, err := os.Getwd()
+	require.NoError(t, err)
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			amalgArgs := []string{
+				"run", "--pull", "never", "--rm",
+				"-v", curdir + ":/app",
+				"-v", filepath.Join(curdir, testdataPath, "luarocks") + ":/usr/local/bin/luarocks",
+			}
+
+			amalgArgs = append(amalgArgs, "enapter/rockamalg", "amalg",
+				"-d", filepath.Join(testdataPath, "deps"),
+				"-o", filepath.Join(testdataPath, "out.lua"))
+
+			expectedStdout := filepath.Join(testdataPath, "stdout")
+			if tc.allowDevDeps {
+				amalgArgs = append(amalgArgs, "--allow-dev-dependencies")
+				expectedStdout += ".dev"
+			}
+
+			amalgArgs = append(amalgArgs, filepath.Join(testdataPath, "test.lua"))
+
+			dockerCmd := exec.Command("docker", amalgArgs...)
+
+			stdoutBuf := &bytes.Buffer{}
+			dockerCmd.Stdout = stdoutBuf
+
+			require.Error(t, dockerCmd.Run())
+
+			fixOutputRe := regexp.MustCompile(`genrockspec\d+`)
+			actualDockerStdout := fixOutputRe.ReplaceAll(stdoutBuf.Bytes(), []byte("genrockspec"))
+
+			checkExpectedWithBytes(t, expectedStdout, actualDockerStdout)
+		})
+	}
 }
 
 func testAmalg(t *testing.T, testdataDir string, rt rockstype) {
