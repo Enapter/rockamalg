@@ -56,7 +56,7 @@ func (s *Server) Amalg(
 	}
 	defer func() { os.RemoveAll(amalgDir) }()
 
-	amalgParams := rockamalg.Params{
+	amalgParams := rockamalg.AmalgParams{
 		Output:       filepath.Join(amalgDir, "out.lua"),
 		Isolate:      req.GetIsolate(),
 		DisableDebug: req.GetDisableDebug(),
@@ -96,9 +96,7 @@ func (s *Server) Amalg(
 		return nil, status.Errorf(codes.Internal, "reading result output: %v", err)
 	}
 
-	return &rockamalgrpc.AmalgResponse{
-		Lua: out,
-	}, nil
+	return &rockamalgrpc.AmalgResponse{Lua: out}, nil
 }
 
 func (s *Server) writeDependenciesFile(deps []string, path string) error {
