@@ -26,7 +26,7 @@ type Rockamalg struct {
 	commandExecMu sync.Mutex
 }
 
-type Params struct {
+type AmalgParams struct {
 	Dependencies string
 	Rockspec     string
 	Lua          string
@@ -60,7 +60,7 @@ dependencies = {
 	}
 }
 
-func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
+func (r *Rockamalg) Amalg(ctx context.Context, p AmalgParams) error {
 	if p.Dependencies != "" && p.Rockspec != "" {
 		return errRockspecDepsSimultaneously
 	}
@@ -98,7 +98,7 @@ func (r *Rockamalg) Amalg(ctx context.Context, p Params) error {
 }
 
 type amalg struct {
-	p            Params
+	p            AmalgParams
 	luaDir       string
 	luaMain      string
 	singleFile   bool
