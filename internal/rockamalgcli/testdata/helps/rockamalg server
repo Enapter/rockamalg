@@ -8,5 +8,6 @@ OPTIONS:
    --listen-address value, -l value  Listen address [$LISTEN_ADDRESS]
    --retry-timeout value, -r value   Timeout between server restars (default: 0s) [$RETRY_TIMEOUT]
    --rocks-server value, -s value    Use custom rocks server
+   --force-isolate                   Force server to use only isolate mode for amalgamation. (default: false)
    --help, -h                        show help (default: false)
    

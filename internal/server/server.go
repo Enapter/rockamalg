@@ -26,8 +26,8 @@ type Server struct {
 	amalg *rockamalg.Rockamalg
 }
 
-func New(rocksServer string) *Server {
-	amalg := rockamalg.New(rocksServer)
+func New(rockamalgParams rockamalg.Params) *Server {
+	amalg := rockamalg.New(rockamalgParams)
 	return &Server{
 		amalg: amalg,
 	}

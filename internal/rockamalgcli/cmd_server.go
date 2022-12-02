@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/enapter/rockamalg/internal/api/rockamalgrpc"
+	"github.com/enapter/rockamalg/internal/rockamalg"
 	"github.com/enapter/rockamalg/internal/server"
 )
 
@@ -15,6 +16,7 @@ type cmdServer struct {
 	listenAddress string
 	retryTimeout  time.Duration
 	rocksServer   string
+	forceIsolate  bool
 }
 
 func buildCmdServer() *cli.Command {
@@ -46,6 +48,11 @@ func buildCmdServer() *cli.Command {
 				Usage:       "Use custom rocks server",
 				Destination: &cmd.rocksServer,
 			},
+			&cli.BoolFlag{
+				Name:        "force-isolate",
+				Usage:       "Force server to use only isolate mode for amalgamation.",
+				Destination: &cmd.forceIsolate,
+			},
 		},
 		Action: func(cliCtx *cli.Context) error {
 			gsrv := grpcserver.New(grpcserver.Params{
@@ -65,7 +72,8 @@ func buildCmdServer() *cli.Command {
 
 			fmt.Fprintf(cliCtx.App.Writer, "gRPC server starting at %s\n", cmd.listenAddress)
 
-			rockamalgrpc.RegisterRockamalgServer(gsrv, server.New(cmd.rocksServer))
+			srv := server.New(rockamalg.Params{RocksServer: cmd.rocksServer, ForceIsolate: cmd.forceIsolate})
+			rockamalgrpc.RegisterRockamalgServer(gsrv, srv)
 			gsrv.Run(cliCtx.Context)
 
 			return nil
