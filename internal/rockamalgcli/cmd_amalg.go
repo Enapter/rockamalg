@@ -87,7 +87,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 			return nil
 		},
 		Action: func(cliCtx *cli.Context) error {
-			return rockamalg.New(cmd.rocksServer).
+			return rockamalg.New(rockamalg.Params{RocksServer: cmd.rocksServer}).
 				Amalg(cliCtx.Context,
 					rockamalg.AmalgParams{
 						Dependencies: cmd.deps,

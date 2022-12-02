@@ -81,6 +81,8 @@ It's possible to run rockamalg in server mode. This mode is useful to integrate 
 
 ## Dependency caching
 
+🚧 At now caching is not recommended to use. Run server with `--force-isolate` flag to completly disable it. The problem is caching is prevent for use new version. E.g. you have dependency `inspect >= 3.1` and amalgamate your script with 3.1 version. But if a new version of inspect will be released, the rockamalg will use cached 3.1 version to satisfy dependency.
+
 Downloading dependencies for each amalgamation could take a lot of time. By default rockamalg uses dependency cache to speedup the amalgamation.
 
 You need to mount a volume into `/opt/rockamalg/.cache` to reuse cache between runs.

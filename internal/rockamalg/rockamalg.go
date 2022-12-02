@@ -24,6 +24,7 @@ type Rockamalg struct {
 	rocksServer   string
 	analyzer      *analyzer.Analyzer
 	commandExecMu sync.Mutex
+	forceIsolate  bool
 }
 
 type AmalgParams struct {
@@ -37,7 +38,12 @@ type AmalgParams struct {
 	Writer       io.Writer
 }
 
-func New(rocksServer string) *Rockamalg {
+type Params struct {
+	RocksServer  string
+	ForceIsolate bool
+}
+
+func New(p Params) *Rockamalg {
 	tmpl := template.Must(template.New("<rockspec>").Parse(`
 rockspec_format = '3.0'
 package = 'generated'
@@ -55,12 +61,17 @@ dependencies = {
 
 	return &Rockamalg{
 		rockspecTmpl: tmpl,
-		rocksServer:  rocksServer,
+		rocksServer:  p.RocksServer,
+		forceIsolate: p.ForceIsolate,
 		analyzer:     analyzer.New(cacheTree),
 	}
 }
 
 func (r *Rockamalg) Amalg(ctx context.Context, p AmalgParams) error {
+	if r.forceIsolate {
+		p.Isolate = true
+	}
+
 	if p.Dependencies != "" && p.Rockspec != "" {
 		return errRockspecDepsSimultaneously
 	}
