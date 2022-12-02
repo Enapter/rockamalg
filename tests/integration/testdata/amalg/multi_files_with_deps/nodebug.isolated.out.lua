@@ -3031,7 +3031,7 @@ local s = {
 
   _COPYRIGHT   = "Copyright (c) 2012 Olivine Labs, LLC.",
   _DESCRIPTION = "A simple string key/value store for i18n or any other case where you want namespaced strings.",
-  _VERSION     = "Say 1.2",
+  _VERSION     = "Say 1.3",
 
   set_namespace = function(self, namespace)
     current_namespace = namespace
@@ -3054,7 +3054,11 @@ local s = {
 
 local __meta = {
   __call = function(self, key, vars)
+    if vars ~= nil and type(vars) ~= "table" then
+      error(("expected parameter table to be a table, got '%s'"):format(type(vars)), 2)
+    end
     vars = vars or {}
+    vars.n = math.max((vars.n or 0), #vars)
 
     local str = registry[current_namespace][key] or registry[fallback_namespace][key]
 
@@ -3064,8 +3068,8 @@ local __meta = {
     str = tostring(str)
     local strings = {}
 
-    for i,v in ipairs(vars) do
-      table.insert(strings, tostring(v))
+    for i = 1, vars.n or #vars do
+      table.insert(strings, tostring(vars[i]))
     end
 
     return #strings > 0 and str:format(unpack(strings)) or str
