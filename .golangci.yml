@@ -6,31 +6,41 @@ run:
 linters:
   disable-all: true
   enable:
+    - asasalint
     - asciicheck
     - bidichk
     - bodyclose
+    - containedctx
     - contextcheck
     # - cyclop
       # Measuring code complexity is hard. Cyclomatic complexity is doubtfully
       # a reliable metric for this purpose. Some problems are complex by nature
       # and therefore more cyclomatically complex code might actually be
       # simpler.
-    - deadcode
+    # - deadcode # deprecated (since v1.49.0) due to: The owner seems to have abandoned the linter. Replaced by unused.
+    - decorder
     - depguard
     - dogsled
     - dupl
+    - dupword
     - durationcheck
     - errname
     - errcheck
+    - errchkjson
     - errorlint
+    - execinquery
     - exhaustive
     # - exhaustivestruct
+      # We frequently make use of zero-values and partial initialization.
+    # - exhaustruct
       # We frequently make use of zero-values and partial initialization.
     - exportloopref
     - forbidigo
     - forcetypeassert
     - funlen
     - gci
+    - ginkgolinter
+    - gocheckcompilerdirectives
     - gochecknoglobals
     - gochecknoinits
     - gocognit
@@ -61,15 +71,21 @@ linters:
     - gosec
     - gosimple
     - govet
-    - ifshort
+    - grouper
+    # - ifshort # deprecated (since v1.48.0) due to: The repository of the linter has been deprecated by the owner.
     - importas
     # - ireturn # See: https://github.com/go-proverbs/go-proverbs.github.io/issues/37.
     - ineffassign
+    - interfacebloat
     # - interfacer # Is prone to bad suggestions (officialy deprecated).
+    - ireturn
     - lll
+    - loggercheck
+    - maintidx
     # - maligned # Replaced by `govet`'s `fieldalignment`
     - makezero
     - misspell
+    - musttag
     - nakedret
     - nestif
     - nilnil # Zero-value of maps, slices and channels is `nil` but useful.
@@ -77,30 +93,36 @@ linters:
     # - nlreturn # Too subjective.
     - noctx
     - nolintlint
+    - nonamedreturns
+    # - nosnakecase # deprecated (since v1.48.1) due to: The repository of the linter has been deprecated by the owner. Replaced by revive(var-naming).
+    - nosprintfhostport
     - paralleltest
     - prealloc
     - predeclared
     - promlinter
+    - reassign
     - revive
     - rowserrcheck
     # - scopelint # Replaced by `exportloopref`.
     - sqlclosecheck
     - staticcheck
-    - structcheck
+    # - structcheck # deprecated (since v1.49.0) due to: The owner seems to have abandoned the linter. Replaced by unused.
     - stylecheck
     - tagliatelle
     - tenv
+    - testableexamples
     - testpackage
     - thelper
     - tparallel
     - typecheck
     - unconvert
     - unparam
+    - usestdlibvars
     # - varnamelen
       # Though the idea is idiomatic, the length is not the only thing that
       # determines whether a variable is "easy to use".
     - unused
-    - varcheck
+    # - varcheck # deprecated (since v1.49.0) due to: The owner seems to have abandoned the linter. Replaced by unused.
     - wastedassign
     - whitespace
     # - wrapcheck # Is prone to bad suggestions (especially see issue #1).

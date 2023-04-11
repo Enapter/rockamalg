@@ -151,7 +151,7 @@ func (a *amalg) Do(ctx context.Context) error {
 	return nil
 }
 
-func (a *amalg) setupConfig(ctx context.Context) error {
+func (a *amalg) setupConfig(_ context.Context) error {
 	if a.disableCache || a.p.Isolate {
 		tmpDir, err := os.MkdirTemp("/tmp", "luarocks_deps_")
 		if err != nil {
@@ -283,7 +283,7 @@ func (a *amalg) amalgamate(ctx context.Context) error {
 	return nil
 }
 
-func (a *amalg) cleanupResult(ctx context.Context) error {
+func (a *amalg) cleanupResult(_ context.Context) error {
 	f, err := os.OpenFile(a.p.Output, os.O_RDWR, 0)
 	if err != nil {
 		return fmt.Errorf("open: %w", err)
