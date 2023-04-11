@@ -129,7 +129,7 @@ func buildReq(t *testing.T, opts testOpts, isolate bool) *rockamalgrpc.AmalgRequ
 	return req
 }
 
-func runServerAndConnect(t *testing.T, port int, rt rockstype) rockamalgrpc.RockamalgClient {
+func runServerAndConnect(t *testing.T, port int, rt rockstype) rockamalgrpc.RockamalgClient { //nolint:ireturn,lll // proxy inteface returning from rockamalgrpc.NewRockamalgClient
 	t.Helper()
 
 	args := []string{"run", "--rm", "--pull", "never", "--detach", "-p", fmt.Sprintf("%d:9090", port)}

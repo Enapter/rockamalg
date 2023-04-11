@@ -195,8 +195,8 @@ func (s *Server) writeLuaDir(data []byte, path string) error {
 
 // sanitizeArchivePath protects archive file pathing from "G305: Zip Slip vulnerability"
 // https://snyk.io/research/zip-slip-vulnerability#go
-func sanitizeArchivePath(d, t string) (v string, err error) {
-	v = filepath.Join(d, t)
+func sanitizeArchivePath(d, t string) (string, error) {
+	v := filepath.Join(d, t)
 	if strings.HasPrefix(v, filepath.Clean(d)) {
 		return v, nil
 	}

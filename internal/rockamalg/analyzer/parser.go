@@ -16,6 +16,7 @@ import (
 // Lua compiler emits new chunk for main and each declared function.
 //
 // listing example:
+//
 //	main <(string):0,0> (2 instructions at 00000029D9FA72D0)
 //	0+ params, 2 slots, 1 upvalue, 1 local, 0 constants, 1 function
 //	1       [1]     CLOSURE         0 0     ; 00000029D9FA86D0
@@ -163,6 +164,7 @@ type header struct {
 // parseHeader parses header of a chunk.
 //
 // header example:
+//
 //	main <(string):0,0> (2 instructions at 00000029D9FA72D0)
 //	0+ params, 2 slots, 1 upvalue, 1 local, 0 constants, 1 function
 func (p *chunksParser) parseHeader() (header, error) {
@@ -194,6 +196,7 @@ func (p *chunksParser) parseHeader() (header, error) {
 // parseInstructionSegment parses instruction segment.
 //
 // instruction segment example:
+//
 //	1	[1]	CALL     	0 1 1
 //	2	[1]	GETTABUP 	0 0 -1	; _ENV "require"
 //	3	[2]	LOADK    	1 -6	; "yopta.utils"
@@ -221,6 +224,7 @@ func (p *chunksParser) parseInstructionSegment(count int) ([]instruction, error)
 // parseSegment parses single segment.
 //
 // constant example:
+//
 //	1	"require"
 //	2	"mymod"
 //	3	"mymodule"
@@ -228,7 +232,9 @@ func (p *chunksParser) parseInstructionSegment(count int) ([]instruction, error)
 //	5	"yopta_utils"
 //	6	"yopta.utils"
 //	7	"say_it"
+//
 // upvalues example:
+//
 //	0	_ENV	1	0
 func (p *chunksParser) parseSegment(name string) (map[int]string, error) {
 	length, err := p.parseSegmentLength(name)
@@ -258,6 +264,7 @@ func (p *chunksParser) parseSegment(name string) (map[int]string, error) {
 // parseSegmentLength parses segment length.
 //
 // segment header example:
+//
 //	constants (7) for 0x60000264c080:
 func (p *chunksParser) parseSegmentLength(segName string) (int, error) {
 	reg, err := regexp.Compile(segName + `[[:space:]]\((\d+)\)`)
@@ -281,7 +288,8 @@ func (p *chunksParser) parseSegmentLength(segName string) (int, error) {
 // parseInstructionLine parses single instruction line.
 //
 // instruction line examples:
-// 	14	[5]	RETURN   	0 1
+//
+//	14	[5]	RETURN   	0 1
 //	1	[1]	CALL     	0 1 1
 func (p *chunksParser) parseInstructionLine(str string) (instruction, error) {
 	const (
@@ -312,6 +320,7 @@ func (p *chunksParser) parseInstructionLine(str string) (instruction, error) {
 // parseOperandsLine parses operands.
 //
 // operands line example:
+//
 //	0 1 1
 func (p *chunksParser) parseOperandsLine(line string) (int, int, int, error) {
 	const minOperands = 2
@@ -348,6 +357,7 @@ func (p *chunksParser) parseOperandsLine(line string) (int, int, int, error) {
 // parse segment line parses single segment line.
 //
 // segment line examples:
+//
 //	1	"require"
 //	0	_ENV	1	0
 func (*chunksParser) parseSegmentLine(line string) (int, string, error) {
