@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine3.15 as builder
+FROM golang:1.19-alpine3.17 as builder
 
 RUN apk add --no-cache git bash
 
@@ -6,13 +6,13 @@ WORKDIR /app
 COPY . .
 RUN ./build.sh
 
-FROM alpine:3.15
+FROM alpine:3.17
 
 WORKDIR /app
 
 RUN apk add --no-cache \
         bash build-base lua5.3 lua5.3-dev openssl \
-        wget unzip zlib=1.2.12-r3 git
+        wget unzip zlib=1.2.13-r0 git
 
 RUN wget https://luarocks.org/releases/luarocks-3.8.0.tar.gz && \
     tar zxpf luarocks-3.8.0.tar.gz && \
