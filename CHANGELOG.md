@@ -1,3 +1,6 @@
+# 0.11.0 (April 11, 2023)
+* Splti isolate and cache features.
+
 # 0.10.0 (November 30, 2022)
 * Allow to use dev dependencies from luarocks.
 * Added --force-isolate mode for server.
