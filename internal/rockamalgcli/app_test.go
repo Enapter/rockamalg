@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -29,7 +28,6 @@ func startTestApp(args ...string) *testApp {
 	outBuf := newLineBuffer()
 	errBuf := &bytes.Buffer{}
 
-	fmt.Println("~ args", args)
 	app := rockamalgcli.NewApp()
 	app.HideVersion = true
 	app.Writer = outBuf
