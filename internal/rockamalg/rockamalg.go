@@ -24,7 +24,7 @@ type Rockamalg struct {
 	rocksServer   string
 	analyzer      *analyzer.Analyzer
 	commandExecMu sync.Mutex
-	forceIsolate  bool
+	disableCache  bool
 }
 
 type AmalgParams struct {
@@ -40,7 +40,7 @@ type AmalgParams struct {
 
 type Params struct {
 	RocksServer  string
-	ForceIsolate bool
+	DisableCache bool
 }
 
 func New(p Params) *Rockamalg {
@@ -62,16 +62,12 @@ dependencies = {
 	return &Rockamalg{
 		rockspecTmpl: tmpl,
 		rocksServer:  p.RocksServer,
-		forceIsolate: p.ForceIsolate,
+		disableCache: p.DisableCache,
 		analyzer:     analyzer.New(cacheTree),
 	}
 }
 
 func (r *Rockamalg) Amalg(ctx context.Context, p AmalgParams) error {
-	if r.forceIsolate {
-		p.Isolate = true
-	}
-
 	if p.Dependencies != "" && p.Rockspec != "" {
 		return errRockspecDepsSimultaneously
 	}
@@ -113,6 +109,7 @@ type amalg struct {
 	luaDir       string
 	luaMain      string
 	singleFile   bool
+	disableCache bool
 	tree         string
 	modules      []string
 	rockspecTmpl *template.Template
@@ -155,7 +152,7 @@ func (a *amalg) Do(ctx context.Context) error {
 }
 
 func (a *amalg) setupConfig(ctx context.Context) error {
-	if a.p.Isolate {
+	if a.disableCache || a.p.Isolate {
 		tmpDir, err := os.MkdirTemp("/tmp", "luarocks_deps_")
 		if err != nil {
 			return fmt.Errorf("mkdir temp: %w", err)

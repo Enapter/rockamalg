@@ -16,7 +16,7 @@ type cmdServer struct {
 	listenAddress string
 	retryTimeout  time.Duration
 	rocksServer   string
-	forceIsolate  bool
+	disableCache  bool
 }
 
 func buildCmdServer() *cli.Command {
@@ -49,9 +49,9 @@ func buildCmdServer() *cli.Command {
 				Destination: &cmd.rocksServer,
 			},
 			&cli.BoolFlag{
-				Name:        "force-isolate",
-				Usage:       "Force server to use only isolate mode for amalgamation.",
-				Destination: &cmd.forceIsolate,
+				Name:        "disable-cache",
+				Usage:       "Don't use cache for amalgamation.",
+				Destination: &cmd.disableCache,
 			},
 		},
 		Action: func(cliCtx *cli.Context) error {
@@ -72,7 +72,7 @@ func buildCmdServer() *cli.Command {
 
 			fmt.Fprintf(cliCtx.App.Writer, "gRPC server starting at %s\n", cmd.listenAddress)
 
-			srv := server.New(rockamalg.Params{RocksServer: cmd.rocksServer, ForceIsolate: cmd.forceIsolate})
+			srv := server.New(rockamalg.Params{RocksServer: cmd.rocksServer, DisableCache: cmd.disableCache})
 			rockamalgrpc.RegisterRockamalgServer(gsrv, srv)
 			gsrv.Run(cliCtx.Context)
 
