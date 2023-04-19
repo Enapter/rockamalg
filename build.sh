@@ -2,9 +2,10 @@
 
 set -ex
 
-
 BUILD_COMMIT="$(git rev-parse --short HEAD)"
 BUILD_VERSION="$(git describe --tags || echo dev)"
+
+name=$1
 
 ldflags="-X main.commit=${BUILD_COMMIT} -X main.version=${BUILD_VERSION}"
 
@@ -17,4 +18,4 @@ ldflags+=" -w -s"
 go build \
     -mod=vendor \
     -ldflags="${ldflags}" \
-    -o ./bin/rockamalg ./cmd/rockamalg
+    -o "./bin/${name}" "./cmd/${name}"

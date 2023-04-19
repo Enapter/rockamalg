@@ -100,11 +100,10 @@ docker run --rm -it \
 Server mode:
 
 ```
-docker run --rm -d \
+docker run --rm -d -e LISTEN_ADDRESS=0.0.0.0:9090 -e RETRY_TIMEOUT=1s \
 	   -p 9090:9090 \
-	   -v rockamalg-cache:/opt/rockamalg/.cache \
 	   enapter/rockamalg \
-	   server -l 0.0.0.0:9090 -r 1s
+	   server
 ```
 
 ### Known issues
