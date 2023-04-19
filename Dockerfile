@@ -4,7 +4,8 @@ RUN apk add --no-cache git bash
 
 WORKDIR /app
 COPY . .
-RUN ./build.sh
+RUN ./build.sh rockamalg
+RUN ./build.sh healthcheck
 
 FROM alpine:3.17
 
@@ -29,7 +30,9 @@ RUN mkdir /opt/rockamalg
 COPY --from=builder /app/bin/rockamalg /opt/rockamalg/rockamalg
 
 RUN mkdir /opt/tools
+COPY --from=builder /app/bin/healthcheck /opt/tools/healthcheck
 COPY pack_rocks.sh /opt/tools/pack_rocks.sh
 RUN chmod +x /opt/tools/pack_rocks.sh
 
 ENTRYPOINT ["/opt/rockamalg/rockamalg"]
+HEALTHCHECK --interval=1s CMD /opt/tools/healthcheck
