@@ -63,7 +63,7 @@ dependencies = {
 		rockspecTmpl: tmpl,
 		rocksServer:  p.RocksServer,
 		disableCache: p.DisableCache,
-		analyzer:     analyzer.New(cacheTree),
+		analyzer:     analyzer.New(),
 	}
 }
 
@@ -326,7 +326,7 @@ func (a *amalg) calculateIsolatedRequires(ctx context.Context) error {
 }
 
 func (a *amalg) analyzeRequires(context.Context) error {
-	reqs, err := a.analyzer.AnalyzeRequires(a.luaMain, a.luaDir)
+	reqs, err := a.analyzer.AnalyzeRequires(a.luaMain, a.luaDir, a.tree)
 	if err != nil {
 		return fmt.Errorf("analyze requires: %w", err)
 	}

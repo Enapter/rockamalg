@@ -1,3 +1,6 @@
+# 0.12.1 (May 8, 2023)
+* Fix cache usage
+
 # 0.12.0 (April 19, 2023)
 * Add healthcheck
 
