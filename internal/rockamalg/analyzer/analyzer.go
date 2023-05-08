@@ -11,22 +11,20 @@ import (
 )
 
 type Analyzer struct {
-	cacheDir string
 	resolver *resolver
 	parser   *parser
 }
 
-func New(cacheTree string) *Analyzer {
+func New() *Analyzer {
 	return &Analyzer{
-		cacheDir: filepath.Join(cacheTree, "share", "lua", "5.3"),
 		resolver: newResolver(),
 		parser:   newParser(),
 	}
 }
 
-func (a *Analyzer) AnalyzeRequires(luaMain, luaDir string) ([]string, error) {
+func (a *Analyzer) AnalyzeRequires(luaMain, luaDir, cacheTree string) ([]string, error) {
 	an := analyzer{
-		cacheDir: a.cacheDir,
+		cacheDir: filepath.Join(cacheTree, "share", "lua", "5.3"),
 		luaDir:   luaDir,
 		resolver: a.resolver,
 		parser:   a.parser,
