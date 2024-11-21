@@ -1,6 +1,6 @@
 module github.com/enapter/rockamalg
 
-go 1.19
+go 1.21
 
 require (
 	github.com/kulti/grpc-retry v0.1.0
