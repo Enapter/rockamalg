@@ -17,14 +17,11 @@ import (
 	"github.com/enapter/rockamalg/internal/rockamalg/analyzer"
 )
 
-const cacheTree = "/opt/rockamalg/.cache"
-
 type Rockamalg struct {
 	rockspecTmpl  *template.Template
 	rocksServer   string
 	analyzer      *analyzer.Analyzer
 	commandExecMu sync.Mutex
-	disableCache  bool
 }
 
 type AmalgParams struct {
@@ -39,8 +36,7 @@ type AmalgParams struct {
 }
 
 type Params struct {
-	RocksServer  string
-	DisableCache bool
+	RocksServer string
 }
 
 func New(p Params) *Rockamalg {
@@ -62,7 +58,6 @@ dependencies = {
 	return &Rockamalg{
 		rockspecTmpl: tmpl,
 		rocksServer:  p.RocksServer,
-		disableCache: p.DisableCache,
 		analyzer:     analyzer.New(),
 	}
 }
@@ -109,7 +104,6 @@ type amalg struct {
 	luaDir       string
 	luaMain      string
 	singleFile   bool
-	disableCache bool
 	tree         string
 	modules      []string
 	rockspecTmpl *template.Template
@@ -152,16 +146,12 @@ func (a *amalg) Do(ctx context.Context) error {
 }
 
 func (a *amalg) setupConfig(_ context.Context) error {
-	if a.disableCache || a.p.Isolate {
-		tmpDir, err := os.MkdirTemp("/tmp", "luarocks_deps_")
-		if err != nil {
-			return fmt.Errorf("mkdir temp: %w", err)
-		}
-		a.cleanupFns = append(a.cleanupFns, func() { os.RemoveAll(tmpDir) })
-		a.tree = tmpDir
-	} else {
-		a.tree = cacheTree
+	tmpDir, err := os.MkdirTemp("/tmp", "luarocks_deps_")
+	if err != nil {
+		return fmt.Errorf("mkdir temp: %w", err)
 	}
+	a.cleanupFns = append(a.cleanupFns, func() { os.RemoveAll(tmpDir) })
+	a.tree = tmpDir
 
 	if !filepath.IsAbs(a.p.Output) {
 		curDir, err := os.Getwd()

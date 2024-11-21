@@ -79,26 +79,6 @@ docker run --rm -it \
 
 It's possible to run rockamalg in server mode. This mode is useful to integrate with another services, which works in separate Docker containers.
 
-## Dependency caching
-
-🚧 At now caching is not recommended to use. Run server with `--disable-cache` flag to completly disable it. The problem is caching is prevent for use new version. E.g. you have dependency `inspect >= 3.1` and amalgamate your script with 3.1 version. But if a new version of inspect will be released, the rockamalg will use cached 3.1 version to satisfy dependency.
-
-Downloading dependencies for each amalgamation could take a lot of time. By default rockamalg uses dependency cache to speedup the amalgamation.
-
-You need to mount a volume into `/opt/rockamalg/.cache` to reuse cache between runs.
-
-Single run:
-
-```
-docker run --rm -it \
-	   -v $(pwd):/app \
-	   -v rockamalg-cache:/opt/rockamalg/.cache \
-	   enapter/rockamalg \
-	   amalg -o ucm.lua -d deps lua_dir
-```
-
-Server mode:
-
 ```
 docker run --rm -d -e LISTEN_ADDRESS=0.0.0.0:9090 -e RETRY_TIMEOUT=1s \
 	   -p 9090:9090 \

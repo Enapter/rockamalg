@@ -80,8 +80,11 @@ func TestAmalgDevDeps(t *testing.T) {
 
 			require.Error(t, dockerCmd.Run())
 
+			fixDepsDirRe := regexp.MustCompile(`/tmp/luarocks_deps_\d+`)
+			actualDockerStdout := fixDepsDirRe.ReplaceAll(stdoutBuf.Bytes(), []byte("/tmp/luarocks_deps"))
+
 			fixOutputRe := regexp.MustCompile(`genrockspec\d+`)
-			actualDockerStdout := fixOutputRe.ReplaceAll(stdoutBuf.Bytes(), []byte("genrockspec"))
+			actualDockerStdout = fixOutputRe.ReplaceAll(actualDockerStdout, []byte("genrockspec"))
 
 			checkExpectedWithBytes(t, expectedStdout, actualDockerStdout)
 		})
