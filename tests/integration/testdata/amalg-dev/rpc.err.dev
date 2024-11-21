@@ -1,2 +1,2 @@
-rpc error: code = Internal desc = amalgamation: install dependencies: run luarocks install: exit status 1 (luarocks args: --tree /opt/rockamalg/.cache install --only-deps /tmp/genrockspec/generated-dev-1.rockspec --dev
+rpc error: code = Internal desc = amalgamation: install dependencies: run luarocks install: exit status 1 (luarocks args: --tree /tmp/luarocks_deps install --only-deps /tmp/genrockspec/generated-dev-1.rockspec --dev
 )

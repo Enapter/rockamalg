@@ -73,8 +73,11 @@ func TestServerDevDeps(t *testing.T) {
 			_, err := cli.Amalg(context.Background(), req)
 			require.Error(t, err)
 
+			fixDepsDirRe := regexp.MustCompile(`/tmp/luarocks_deps_\d+`)
+			actualErrorText := fixDepsDirRe.ReplaceAllString(err.Error(), "/tmp/luarocks_deps")
+
 			fixErrorTextRe := regexp.MustCompile(`genrockspec\d+`)
-			actualErrorText := fixErrorTextRe.ReplaceAllString(err.Error(), "genrockspec")
+			actualErrorText = fixErrorTextRe.ReplaceAllString(actualErrorText, "genrockspec")
 
 			checkExpectedWithBytes(t, expectedStdout, []byte(actualErrorText))
 		})
