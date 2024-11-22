@@ -4,11 +4,9 @@
 package integration_test
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -22,6 +20,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/enapter/rockamalg/internal/api/rockamalgrpc"
+	"github.com/enapter/rockamalg/internal/archive"
 )
 
 func TestServerPublicRocks(t *testing.T) {
@@ -214,35 +213,8 @@ func isDirectory(t *testing.T, path string) bool {
 func zipDir(t *testing.T, path string) []byte {
 	t.Helper()
 
-	buf := &bytes.Buffer{}
-	myZip := zip.NewWriter(buf)
-
-	err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		relPath := strings.TrimPrefix(filePath, path)
-		relPath = strings.TrimPrefix(relPath, "/")
-		zipFile, err := myZip.Create(relPath)
-		if err != nil {
-			return err
-		}
-		fsFile, err := os.Open(filePath)
-		if err != nil {
-			return err
-		}
-		_, err = io.Copy(zipFile, fsFile)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-
+	data, err := archive.ZipDir(path)
 	require.NoError(t, err)
-	require.NoError(t, myZip.Close())
 
-	return buf.Bytes()
+	return data
 }
