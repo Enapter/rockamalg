@@ -1,11 +1,9 @@
 package server
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/enapter/rockamalg/internal/api/rockamalgrpc"
+	"github.com/enapter/rockamalg/internal/archive"
 	"github.com/enapter/rockamalg/internal/rockamalg"
 )
 
@@ -82,7 +81,7 @@ func (s *Server) Amalg(
 		}
 	} else {
 		amalgParams.Lua = filepath.Join(amalgDir, "fw")
-		if err := s.writeLuaDir(req.GetLuaDir(), amalgParams.Lua); err != nil {
+		if err := archive.UnzipBytesToDir(req.GetLuaDir(), amalgParams.Lua); err != nil {
 			return nil, status.Errorf(codes.Internal, "create lua dir: %v", err)
 		}
 	}
@@ -149,57 +148,4 @@ func (s *Server) writeRockspec(ctx context.Context, data []byte, path string) (s
 	}
 
 	return rockspecFileName, nil
-}
-
-func (s *Server) writeLuaDir(data []byte, path string) error {
-	archive, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		return fmt.Errorf("create zip reader: %w", err)
-	}
-
-	for _, f := range archive.File {
-		if f.FileInfo().IsDir() {
-			continue
-		}
-
-		filePath, err := sanitizeArchivePath(path, f.Name)
-		if err != nil {
-			return err
-		}
-
-		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
-			return fmt.Errorf("create dir: %w", err)
-		}
-
-		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-		if err != nil {
-			return fmt.Errorf("create file: %w", err)
-		}
-
-		fileInArchive, err := f.Open()
-		if err != nil {
-			return fmt.Errorf("open archive file: %w", err)
-		}
-
-		//#nosec G110 -- this server for internal usage only.
-		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
-			return fmt.Errorf("copy: %w", err)
-		}
-
-		dstFile.Close()
-		fileInArchive.Close()
-	}
-
-	return nil
-}
-
-// sanitizeArchivePath protects archive file pathing from "G305: Zip Slip vulnerability"
-// https://snyk.io/research/zip-slip-vulnerability#go
-func sanitizeArchivePath(d, t string) (string, error) {
-	v := filepath.Join(d, t)
-	if strings.HasPrefix(v, filepath.Clean(d)) {
-		return v, nil
-	}
-
-	return "", errZipInvalidFilePath
 }
