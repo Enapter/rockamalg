@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -39,14 +40,8 @@ func (s *Server) Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 func (s *Server) Amalg(
 	ctx context.Context, req *rockamalgrpc.AmalgRequest,
 ) (*rockamalgrpc.AmalgResponse, error) {
-	if len(req.GetLuaDir()) != 0 && len(req.GetLuaFile()) != 0 {
-		return nil, status.Error(codes.InvalidArgument,
-			"lua file and lua directory are not allowed simultaneously")
-	}
-
-	if len(req.GetLuaDir()) == 0 && len(req.GetLuaFile()) == 0 {
-		return nil, status.Error(codes.InvalidArgument,
-			"lua file or lua directory are not provided")
+	if errSt := s.validateAmalgRequest(req); errSt != nil {
+		return nil, errSt.Err()
 	}
 
 	amalgDir, err := os.MkdirTemp("/tmp", "amalg")
@@ -55,35 +50,9 @@ func (s *Server) Amalg(
 	}
 	defer func() { os.RemoveAll(amalgDir) }()
 
-	amalgParams := rockamalg.AmalgParams{
-		Output:       filepath.Join(amalgDir, "out.lua"),
-		Isolate:      req.GetIsolate(),
-		DisableDebug: req.GetDisableDebug(),
-		AllowDevDeps: req.GetAllowDevDependencies(),
-	}
-
-	if len(req.GetDependencies()) != 0 {
-		amalgParams.Dependencies = filepath.Join(amalgDir, "deps")
-		if err := s.writeDependenciesFile(req.GetDependencies(), amalgParams.Dependencies); err != nil {
-			return nil, status.Errorf(codes.Internal, "create dependencies file: %v", err)
-		}
-	}
-
-	amalgParams.Rockspec, err = s.writeRockspec(ctx, req.GetRockspec(), amalgDir)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "create rockspec file: %v", err)
-	}
-
-	if len(req.GetLuaFile()) != 0 {
-		amalgParams.Lua = filepath.Join(amalgDir, "fw.lua")
-		if err := os.WriteFile(amalgParams.Lua, req.GetLuaFile(), newFilePerm); err != nil {
-			return nil, status.Errorf(codes.Internal, "create lua file: %v", err)
-		}
-	} else {
-		amalgParams.Lua = filepath.Join(amalgDir, "fw")
-		if err := archive.UnzipBytesToDir(req.GetLuaDir(), amalgParams.Lua); err != nil {
-			return nil, status.Errorf(codes.Internal, "create lua dir: %v", err)
-		}
+	amalgParams, errSt := s.prepareAmalgParams(ctx, req, amalgDir)
+	if errSt != nil {
+		return nil, errSt.Err()
 	}
 
 	if err := s.amalg.Amalg(ctx, amalgParams); err != nil {
@@ -95,7 +64,67 @@ func (s *Server) Amalg(
 		return nil, status.Errorf(codes.Internal, "reading result output: %v", err)
 	}
 
-	return &rockamalgrpc.AmalgResponse{Lua: out}, nil
+	vendor, err := os.ReadFile(amalgParams.Vendor)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, status.Errorf(codes.Internal, "reading result vendor: %v", err)
+		}
+	}
+
+	return &rockamalgrpc.AmalgResponse{Lua: out, Vendor: vendor}, nil
+}
+
+func (s *Server) validateAmalgRequest(req *rockamalgrpc.AmalgRequest) *status.Status {
+	if len(req.GetLuaDir()) != 0 && len(req.GetLuaFile()) != 0 {
+		return status.New(codes.InvalidArgument,
+			"lua file and lua directory are not allowed simultaneously")
+	}
+
+	if len(req.GetLuaDir()) == 0 && len(req.GetLuaFile()) == 0 {
+		return status.New(codes.InvalidArgument,
+			"lua file or lua directory are not provided")
+	}
+	return nil
+}
+
+func (s *Server) prepareAmalgParams(
+	ctx context.Context, req *rockamalgrpc.AmalgRequest, amalgDir string,
+) (rockamalg.AmalgParams, *status.Status) {
+	zero := rockamalg.AmalgParams{}
+
+	amalgParams := rockamalg.AmalgParams{
+		Output:       filepath.Join(amalgDir, "out.lua"),
+		Vendor:       filepath.Join(amalgDir, "vendor.zip"),
+		Isolate:      req.GetIsolate(),
+		DisableDebug: req.GetDisableDebug(),
+		AllowDevDeps: req.GetAllowDevDependencies(),
+	}
+
+	if len(req.GetDependencies()) != 0 {
+		amalgParams.Dependencies = filepath.Join(amalgDir, "deps")
+		if err := s.writeDependenciesFile(req.GetDependencies(), amalgParams.Dependencies); err != nil {
+			return zero, status.Newf(codes.Internal, "create dependencies file: %v", err)
+		}
+	}
+
+	amalgParams.Rockspec, err = s.writeRockspec(ctx, req.GetRockspec(), amalgDir)
+	if err != nil {
+		return zero, status.Newf(codes.Internal, "create rockspec file: %v", err)
+	}
+
+	if len(req.GetLuaFile()) != 0 {
+		amalgParams.Lua = filepath.Join(amalgDir, "fw.lua")
+		if err := os.WriteFile(amalgParams.Lua, req.GetLuaFile(), newFilePerm); err != nil {
+			return zero, status.Newf(codes.Internal, "create lua file: %v", err)
+		}
+	} else {
+		amalgParams.Lua = filepath.Join(amalgDir, "fw")
+		if err := archive.UnzipBytesToDir(req.GetLuaDir(), amalgParams.Lua); err != nil {
+			return zero, status.Newf(codes.Internal, "create lua dir: %v", err)
+		}
+	}
+
+	return amalgParams, nil
 }
 
 func (s *Server) writeDependenciesFile(deps []string, path string) error {
