@@ -213,7 +213,7 @@ func isDirectory(t *testing.T, path string) bool {
 func zipDir(t *testing.T, path string) []byte {
 	t.Helper()
 
-	data, err := archive.ZipDir(path)
+	data, err := archive.ZipDirToBytes(path)
 	require.NoError(t, err)
 
 	return data
