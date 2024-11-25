@@ -5,15 +5,20 @@ package integration_test
 
 import (
 	"bytes"
+	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/enapter/rockamalg/internal/archive"
 )
 
 type rockstype int
@@ -106,6 +111,7 @@ func testAmalg(t *testing.T, testdataDir string, rt rockstype) {
 			stdoutBytes := execDockerCommand(t, testOpts.amalgArgs...)
 			checkExpectedWithBytes(t, testOpts.expectedStdout, stdoutBytes)
 			checkExpectedWithFile(t, testOpts.expectedLua, testOpts.outLuaFileName)
+			checkExpectedDirWithZippedFile(t, testOpts.expectedVendor, testOpts.vendorFileName)
 
 			stdoutBytes = execDockerCommand(t, testOpts.luaExecArgs...)
 			checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
@@ -150,10 +156,12 @@ func generateAmalgTests(files []fs.DirEntry) []amalgtest {
 
 type testOpts struct {
 	outLuaFileName   string
+	vendorFileName   string
 	amalgArgs        []string
 	luaExecArgs      []string
 	expectedStdout   string
 	expectedLua      string
+	expectedVendor   string
 	expectedLuaExec  string
 	luaPath          string
 	depsFileName     string
@@ -183,6 +191,12 @@ func buildTestOpts(
 	t.Cleanup(func() { os.Remove(outLuaFile.Name()) })
 	require.NoError(t, outLuaFile.Close())
 
+	vendorFile, err := os.CreateTemp(testdataPath, "vendor_*.zip")
+	require.NoError(t, err)
+
+	t.Cleanup(func() { os.Remove(vendorFile.Name()) })
+	require.NoError(t, vendorFile.Close())
+
 	luaNameBytes, err := os.ReadFile(filepath.Join(testdataPath, "lua"))
 	require.NoError(t, err)
 
@@ -200,7 +214,8 @@ func buildTestOpts(
 			"-v", filepath.Join(curdir, "testdata/rocks")+":/opt/rocks",
 		)
 	}
-	amalgArgs = append(amalgArgs, "enapter/rockamalg", "amalg", "-o", outLuaFile.Name())
+	amalgArgs = append(amalgArgs, "enapter/rockamalg", "amalg",
+		"-output", outLuaFile.Name(), "-vendor", vendorFile.Name())
 
 	depsFileName := filepath.Join(testdataPath, "deps")
 	if isExist(t, depsFileName) {
@@ -240,9 +255,11 @@ func buildTestOpts(
 		amalgArgs:        amalgArgs,
 		luaExecArgs:      luaExecArgs,
 		outLuaFileName:   outLuaFile.Name(),
+		vendorFileName:   vendorFile.Name(),
 		expectedStdout:   filepath.Join(testdataPath, o.stdout),
 		expectedLua:      exepctedLuaFileName,
 		expectedLuaExec:  filepath.Join(testdataPath, "out.lua.exec"),
+		expectedVendor:   filepath.Join(testdataPath, "vendor"),
 		luaPath:          filepath.Join(testdataPath, luaName),
 		depsFileName:     depsFileName,
 		rockspecFileName: rockspecFileName,
@@ -277,6 +294,31 @@ func execDockerCommand(t *testing.T, args ...string) []byte {
 	return stdoutBuf.Bytes()
 }
 
+func checkExpectedDirWithZippedFile(t *testing.T, expectedDirName, actualZipFileName string) {
+	t.Helper()
+
+	if update {
+		require.NoError(t, os.RemoveAll(expectedDirName))
+		if !fileIsEmpty(t, actualZipFileName) {
+			require.NoError(t, archive.UnzipFileToDir(actualZipFileName, expectedDirName))
+		}
+	} else {
+		if fileIsEmpty(t, actualZipFileName) {
+			require.False(t, isExist(t, expectedDirName), "empty vendor.zip, but expected")
+			return
+		}
+
+		expected := dirToFilesMap(t, expectedDirName)
+		actual, err := archive.UnzipFileToFilesMap(actualZipFileName)
+		require.NoError(t, err)
+
+		require.Equal(t, expected, actual)
+		if !reflect.DeepEqual(expected, actual) {
+			require.Fail(t, "vendor differs — run test with update to see differences")
+		}
+	}
+}
+
 func checkExpectedWithFile(t *testing.T, exepctedFileName, actualFileName string) {
 	t.Helper()
 
@@ -299,12 +341,56 @@ func checkExpectedWithBytes(t *testing.T, exepctedFileName string, actualData []
 	}
 }
 
+func dirToFilesMap(t *testing.T, path string) map[string][]byte {
+	t.Helper()
+
+	files := make(map[string][]byte)
+	fsys := os.DirFS(path)
+	err := fs.WalkDir(fsys, ".", func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() {
+			return nil
+		}
+
+		file, err := fsys.Open(path)
+		if err != nil {
+			return fmt.Errorf("open file %q: %w", path, err)
+		}
+
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return fmt.Errorf("read file %q: %w", path, err)
+		}
+		files[path] = data
+		return nil
+	})
+	require.NoError(t, err)
+	return files
+}
+
 func isExist(t *testing.T, path string) bool {
 	t.Helper()
 
 	_, err := os.Stat(path)
 	if err == nil {
 		return true
+	}
+
+	if !os.IsNotExist(err) {
+		t.Fatalf("stat finished with error: %v", err)
+	}
+
+	return false
+}
+
+func fileIsEmpty(t *testing.T, path string) bool {
+	t.Helper()
+
+	fi, err := os.Stat(path)
+	if err == nil {
+		return fi.Size() == 0
 	}
 
 	if !os.IsNotExist(err) {

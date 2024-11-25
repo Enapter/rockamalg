@@ -15,6 +15,7 @@ OPTIONS:
    --deps value, -d value          Use dependencies file
    --rockspec value, -r value      Use rockspec file for dependencies
    --output value, -o value        Output Lua file name
+   --vendor value, -v value        Vendor zip archive file name
    --isolate, -i                   Enable isolate mode (default: false)
    --disable-debug                 Disable debug mode (default: false)
    --allow-dev-dependencies        Allow to use dev dependencies (default: false)

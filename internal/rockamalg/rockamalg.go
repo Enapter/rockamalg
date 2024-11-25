@@ -14,6 +14,7 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/enapter/rockamalg/internal/archive"
 	"github.com/enapter/rockamalg/internal/rockamalg/analyzer"
 )
 
@@ -29,6 +30,7 @@ type AmalgParams struct {
 	Rockspec     string
 	Lua          string
 	Output       string
+	Vendor       string
 	Isolate      bool
 	DisableDebug bool
 	AllowDevDeps bool
@@ -127,6 +129,12 @@ func (a *amalg) Do(ctx context.Context) error {
 	if a.p.Rockspec != "" {
 		if err := a.wrapWithMsg(a.installDependencies, "Installing dependencies")(ctx); err != nil {
 			return fmt.Errorf("install dependencies: %w", err)
+		}
+
+		if a.p.Vendor != "" {
+			if err := a.wrapWithMsg(a.buildVendorArchive, "Building vendor archive")(ctx); err != nil {
+				return fmt.Errorf("build vendor archive: %w", err)
+			}
 		}
 	}
 
@@ -238,6 +246,10 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (a *amalg) buildVendorArchive(_ context.Context) error {
+	return archive.ZipDirToFile(a.tree, a.p.Vendor)
 }
 
 func (a *amalg) calculateRequires(ctx context.Context) error {

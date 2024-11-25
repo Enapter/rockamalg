@@ -12,6 +12,7 @@ type cmdAmalg struct {
 	deps         string
 	rockspec     string
 	output       string
+	vendor       string
 	lua          string
 	isolate      bool
 	disableDebug bool
@@ -54,6 +55,12 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 				Destination: &cmd.output,
 				Required:    true,
 			},
+			&cli.StringFlag{
+				Name:        "vendor",
+				Aliases:     []string{"v"},
+				Usage:       "Vendor zip archive file name",
+				Destination: &cmd.vendor,
+			},
 			&cli.BoolFlag{
 				Name:        "isolate",
 				Aliases:     []string{"i"},
@@ -94,6 +101,7 @@ See the tutorial https://developers.enapter.com/docs/tutorial/lua-complex/introd
 						Rockspec:     cmd.rockspec,
 						Lua:          cmd.lua,
 						Output:       cmd.output,
+						Vendor:       cmd.vendor,
 						Writer:       cliCtx.App.Writer,
 						Isolate:      cmd.isolate,
 						DisableDebug: cmd.disableDebug,
