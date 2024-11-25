@@ -86,6 +86,14 @@ func UnzipFileToFilesMap(zipFile string) (map[string][]byte, error) {
 	return unzipToFilesMap(&archive.Reader)
 }
 
+func UnzipBytesToFilesMap(data []byte) (map[string][]byte, error) {
+	r, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return nil, fmt.Errorf("create zip reader: %w", err)
+	}
+	return unzipToFilesMap(r)
+}
+
 func unzipToFilesMap(archive *zip.Reader) (map[string][]byte, error) {
 	files := make(map[string][]byte, len(archive.File))
 	for _, f := range archive.File {

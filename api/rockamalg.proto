@@ -24,4 +24,5 @@ message AmalgRequest {
 
 message AmalgResponse {
     bytes lua = 1;
+    bytes vendor = 2;
 }

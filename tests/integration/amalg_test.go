@@ -319,6 +319,31 @@ func checkExpectedDirWithZippedFile(t *testing.T, expectedDirName, actualZipFile
 	}
 }
 
+func checkExpectedDirWithZippedBytes(t *testing.T, expectedDirName string, zipBytes []byte) {
+	t.Helper()
+
+	if update {
+		require.NoError(t, os.RemoveAll(expectedDirName))
+		if len(zipBytes) != 0 {
+			require.NoError(t, archive.UnzipBytesToDir(zipBytes, expectedDirName))
+		}
+	} else {
+		if len(zipBytes) == 0 {
+			require.False(t, isExist(t, expectedDirName), "empty vendor, but expected")
+			return
+		}
+
+		expected := dirToFilesMap(t, expectedDirName)
+		actual, err := archive.UnzipBytesToFilesMap(zipBytes)
+		require.NoError(t, err)
+
+		require.Equal(t, expected, actual)
+		if !reflect.DeepEqual(expected, actual) {
+			require.Fail(t, "vendor differs — run test with update to see differences")
+		}
+	}
+}
+
 func checkExpectedWithFile(t *testing.T, exepctedFileName, actualFileName string) {
 	t.Helper()
 

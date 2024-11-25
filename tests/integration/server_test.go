@@ -102,6 +102,7 @@ func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
 			require.NoError(t, err)
 
 			checkExpectedWithBytes(t, testOpts.expectedLua, resp.GetLua())
+			checkExpectedDirWithZippedBytes(t, testOpts.expectedVendor, resp.GetVendor())
 
 			stdoutBytes := execDockerCommand(t, testOpts.luaExecArgs...)
 			checkExpectedWithBytes(t, testOpts.expectedLuaExec, stdoutBytes)
