@@ -126,6 +126,16 @@ func (a *amalg) Do(ctx context.Context) error {
 		}
 	}
 
+	if a.p.Vendor != "" {
+		if empty, err := isFileEmpty(a.p.Vendor); err != nil {
+			return fmt.Errorf("check vendor file is empty: %w", err)
+		} else if !empty {
+			if err := a.wrapWithMsg(a.extractVendorArchive, "Extracting vendor archive")(ctx); err != nil {
+				return fmt.Errorf("extract vendor archive: %w", err)
+			}
+		}
+	}
+
 	if a.p.Rockspec != "" {
 		if err := a.wrapWithMsg(a.installDependencies, "Installing dependencies")(ctx); err != nil {
 			return fmt.Errorf("install dependencies: %w", err)
@@ -246,6 +256,10 @@ func (a *amalg) installDependencies(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (a *amalg) extractVendorArchive(_ context.Context) error {
+	return archive.UnzipFileToDir(a.p.Vendor, a.tree)
 }
 
 func (a *amalg) buildVendorArchive(_ context.Context) error {
@@ -443,4 +457,17 @@ func isDirectory(path string) (bool, error) {
 	}
 
 	return fileInfo.IsDir(), err
+}
+
+func isFileEmpty(path string) (bool, error) {
+	fi, err := os.Stat(path)
+	if err == nil {
+		return fi.Size() == 0, nil
+	}
+
+	if os.IsNotExist(err) {
+		return true, nil
+	}
+
+	return false, err
 }
