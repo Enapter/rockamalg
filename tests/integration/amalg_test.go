@@ -27,6 +27,7 @@ const (
 	publicRocks rockstype = iota
 	privateRocks
 	devRocksTest
+	vendoredRocks
 )
 
 func TestAmalgCommandPublicRocks(t *testing.T) {
@@ -39,6 +40,12 @@ func TestAmalgCommandPrivateRocks(t *testing.T) {
 	t.Parallel()
 
 	testAmalg(t, "testdata/amalg-private", privateRocks)
+}
+
+func TestAmalgCommandPartlyVendored(t *testing.T) {
+	t.Parallel()
+
+	testAmalg(t, "testdata/amalg-partly-vendor", vendoredRocks)
 }
 
 func TestAmalgDevDeps(t *testing.T) {
@@ -196,6 +203,11 @@ func buildTestOpts(
 
 	t.Cleanup(func() { os.Remove(vendorFile.Name()) })
 	require.NoError(t, vendorFile.Close())
+
+	if rt == vendoredRocks {
+		vendorInPath := filepath.Join(testdataPath, "vendor_in")
+		require.NoError(t, archive.ZipDirToFile(vendorInPath, vendorFile.Name()))
+	}
 
 	luaNameBytes, err := os.ReadFile(filepath.Join(testdataPath, "lua"))
 	require.NoError(t, err)

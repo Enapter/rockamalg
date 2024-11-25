@@ -100,6 +100,12 @@ func (s *Server) prepareAmalgParams(
 		AllowDevDeps: req.GetAllowDevDependencies(),
 	}
 
+	if len(req.GetVendor()) != 0 {
+		if err := os.WriteFile(amalgParams.Vendor, req.GetVendor(), newFilePerm); err != nil {
+			return zero, status.Newf(codes.Internal, "create vendor.zip file: %v", err)
+		}
+	}
+
 	if len(req.GetDependencies()) != 0 {
 		amalgParams.Dependencies = filepath.Join(amalgDir, "deps")
 		if err := s.writeDependenciesFile(req.GetDependencies(), amalgParams.Dependencies); err != nil {
@@ -107,6 +113,7 @@ func (s *Server) prepareAmalgParams(
 		}
 	}
 
+	var err error
 	amalgParams.Rockspec, err = s.writeRockspec(ctx, req.GetRockspec(), amalgDir)
 	if err != nil {
 		return zero, status.Newf(codes.Internal, "create rockspec file: %v", err)

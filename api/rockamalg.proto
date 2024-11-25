@@ -20,6 +20,7 @@ message AmalgRequest {
     bool isolate = 5;
     bool disable_debug = 6;
     bool allow_dev_dependencies = 7;
+    bytes vendor = 8;
 }
 
 message AmalgResponse {

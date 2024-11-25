@@ -37,6 +37,12 @@ func TestServerPrivateRocks(t *testing.T) {
 	testServer(t, "testdata/amalg-private", port, privateRocks)
 }
 
+func TestServerCommandPartlyVendored(t *testing.T) {
+	t.Parallel()
+
+	testAmalg(t, "testdata/amalg-partly-vendor", vendoredRocks)
+}
+
 func TestServerDevDeps(t *testing.T) {
 	t.Parallel()
 
@@ -61,7 +67,7 @@ func TestServerDevDeps(t *testing.T) {
 			req := buildReq(t, testOpts{
 				luaPath:      filepath.Join(testdataPath, "test.lua"),
 				depsFileName: filepath.Join(testdataPath, "deps"),
-			}, false)
+			}, devRocksTest, false)
 
 			expectedStdout := filepath.Join(testdataPath, "rpc.err")
 			if tc.allowDevDeps {
@@ -96,7 +102,7 @@ func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
 		t.Run(test.PrettyName(), func(t *testing.T) {
 			t.Parallel()
 			testOpts := buildTestOpts(t, testdataDir, rt, test)
-			req := buildReq(t, testOpts, test.isolate)
+			req := buildReq(t, testOpts, rt, test.isolate)
 
 			resp, err := cli.Amalg(context.Background(), req)
 			require.NoError(t, err)
@@ -110,7 +116,7 @@ func testServer(t *testing.T, testdataDir string, port int, rt rockstype) {
 	}
 }
 
-func buildReq(t *testing.T, opts testOpts, isolate bool) *rockamalgrpc.AmalgRequest {
+func buildReq(t *testing.T, opts testOpts, rt rockstype, isolate bool) *rockamalgrpc.AmalgRequest {
 	t.Helper()
 
 	req := &rockamalgrpc.AmalgRequest{Isolate: isolate, DisableDebug: opts.disableDebug}
@@ -127,6 +133,10 @@ func buildReq(t *testing.T, opts testOpts, isolate bool) *rockamalgrpc.AmalgRequ
 
 	if opts.depsFileName != "" {
 		req.Dependencies = readDependencies(t, opts.depsFileName)
+	}
+
+	if rt == vendoredRocks {
+		req.Vendor = zipDir(t, opts.vendorFileName)
 	}
 
 	return req
