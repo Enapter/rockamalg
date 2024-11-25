@@ -296,7 +296,7 @@ func (a *amalg) cleanupResult(_ context.Context) error {
 		return fmt.Errorf("read: %w", err)
 	}
 
-	buf = bytes.ReplaceAll(buf, []byte(a.tree), []byte("/usr/local"))
+	buf = bytes.ReplaceAll(buf, []byte(a.tree), []byte("vendor"))
 
 	if err := f.Truncate(0); err != nil {
 		return fmt.Errorf("truncate: %w", err)

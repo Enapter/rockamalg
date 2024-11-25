@@ -332,7 +332,7 @@ setmetatable(inspect, { __call = function(_, ...) return inspect.inspect(...) en
 \
 return inspect\
 \
-", '@'.."/usr/local/share/lua/5.3/inspect.lua" ) )
+", '@'.."vendor/share/lua/5.3/inspect.lua" ) )
 
 package.preload[ "lua-string" ] = assert( (loadstring or load)( "local boolvalues = {\13\
 \9[\"1\"] = \"0\";\13\
@@ -620,7 +620,7 @@ function string:totable()\13\
 \9end\13\
 \9return result\13\
 end\13\
-", '@'.."/usr/local/share/lua/5.3/lua-string/init.lua" ) )
+", '@'.."vendor/share/lua/5.3/lua-string/init.lua" ) )
 
 package.preload[ "luassert" ] = assert( (loadstring or load)( "local assert = require('luassert.assert')\
 \
@@ -639,7 +639,7 @@ require('luassert.formatters')\
 require('luassert.languages.en')\
 \
 return assert\
-", '@'.."/usr/local/share/lua/5.3/luassert/init.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/init.lua" ) )
 
 package.preload[ "luassert.array" ] = assert( (loadstring or load)( "local assert = require('luassert.assert')\
 local say = require('say')\
@@ -711,7 +711,7 @@ assert:register(\"assertion\", \"holes\", holes,\
                   \"assertion.array_holes.negative\")\
 \
 assert:register(\"modifier\", \"array\", array)\
-", '@'.."/usr/local/share/lua/5.3/luassert/array.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/array.lua" ) )
 
 package.preload[ "luassert.assert" ] = assert( (loadstring or load)( "local s = require 'say'\
 local astate = require 'luassert.state'\
@@ -895,7 +895,7 @@ local __meta = {\
 }\
 \
 return setmetatable(obj, __meta)\
-", '@'.."/usr/local/share/lua/5.3/luassert/assert.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/assert.lua" ) )
 
 package.preload[ "luassert.assertions" ] = assert( (loadstring or load)( "-- module will not return anything, only register assertions with the main assert engine\
 \
@@ -1225,12 +1225,12 @@ assert:register(\"assertion\", \"matches_error\", error_matches, \"assertion.err
 assert:register(\"assertion\", \"match_error\", error_matches, \"assertion.error.positive\", \"assertion.error.negative\")\
 assert:register(\"assertion\", \"truthy\", truthy, \"assertion.truthy.positive\", \"assertion.truthy.negative\")\
 assert:register(\"assertion\", \"falsy\", falsy, \"assertion.falsy.positive\", \"assertion.falsy.negative\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/assertions.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/assertions.lua" ) )
 
 package.preload[ "luassert.compatibility" ] = assert( (loadstring or load)( "return {\
   unpack = table.unpack or unpack,\
 }\
-", '@'.."/usr/local/share/lua/5.3/luassert/compatibility.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/compatibility.lua" ) )
 
 package.preload[ "luassert.formatters" ] = assert( (loadstring or load)( "-- module will not return anything, only register formatters with the main assert engine\
 local assert = require('luassert.assert')\
@@ -1448,7 +1448,7 @@ assert:set_parameter(\"TableFormatLevel\", 3)\
 assert:set_parameter(\"TableFormatShowRecursion\", false)\
 assert:set_parameter(\"TableErrorHighlightCharacter\", \"*\")\
 assert:set_parameter(\"TableErrorHighlightColor\", \"none\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/formatters/init.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/formatters/init.lua" ) )
 
 package.preload[ "luassert.formatters.binarystring" ] = assert( (loadstring or load)( "local format = function (str)\
   if type(str) ~= \"string\" then return nil end\
@@ -1478,7 +1478,7 @@ end\
 \
 return format\
 \
-", '@'.."/usr/local/share/lua/5.3/luassert/formatters/binarystring.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/formatters/binarystring.lua" ) )
 
 package.preload[ "luassert.languages.ar" ] = assert( (loadstring or load)( "local s = require('say')\
 \
@@ -1501,7 +1501,7 @@ s:set(\"assertion.truthy.negative\", \"تُوُقِّعَت قيمةٌ غيرُ 
 \
 s:set(\"assertion.falsy.positive\", \"تُوُقِّعَت قيمةٌ خاطِئة، بَينَما كانت: \\n%s\")\
 s:set(\"assertion.falsy.negative\", \"تُوُقِّعَت قيمةٌ غيرُ خاطِئة، بَينَما كانت: \\n%s\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/languages/ar.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/languages/ar.lua" ) )
 
 package.preload[ "luassert.languages.en" ] = assert( (loadstring or load)( "local s = require('say')\
 \
@@ -1551,7 +1551,7 @@ s:set(\"assertion.returned_arguments.negative\", \"Expected not to be called wit
 -- errors\
 s:set(\"assertion.internal.argtolittle\", \"the '%s' function requires a minimum of %s arguments, got: %s\")\
 s:set(\"assertion.internal.badargtype\", \"bad argument #%s to '%s' (%s expected, got %s)\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/languages/en.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/languages/en.lua" ) )
 
 package.preload[ "luassert.languages.fr" ] = assert( (loadstring or load)( "local s = require('say')\
 \
@@ -1603,7 +1603,7 @@ s:set(\"assertion.truthy.negative\", \"Assertion supposee etre fausse mais de va
 \
 s:set(\"assertion.unique.positive\", \"Objet attendu pour être unique: \\n %s.\")\
 s:set(\"assertion.unique.negative\", \"Objet attendu pour ne pas être unique: \\n %s.\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/languages/fr.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/languages/fr.lua" ) )
 
 package.preload[ "luassert.languages.ja" ] = assert( (loadstring or load)( "local s = require('say')\
 \
@@ -1639,7 +1639,7 @@ s:set(\"assertion.returned_arguments.negative\", \"期待されていない返�
 -- errors\
 s:set(\"assertion.internal.argtolittle\", \"関数には最低%s個の引数が必要ですが、実際の引数の数は: %s\")\
 s:set(\"assertion.internal.badargtype\", \"bad argument #%s: 関数には%s個の引数が必要ですが、実際に引数の数は: %s\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/languages/ja.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/languages/ja.lua" ) )
 
 package.preload[ "luassert.languages.nl" ] = assert( (loadstring or load)( "local s = require('say')\
 \
@@ -1666,7 +1666,7 @@ s:set(\"assertion.falsy.negative\", \"Verwachtte een niet 'onwarige' (falsy) waa
 -- errors\
 s:set(\"assertion.internal.argtolittle\", \"de '%s' functie verwacht minimaal %s parameters, maar kreeg er: %s\")\
 s:set(\"assertion.internal.badargtype\", \"bad argument #%s: de '%s' functie verwacht een %s als parameter, maar kreeg een: %s\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/languages/nl.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/languages/nl.lua" ) )
 
 package.preload[ "luassert.languages.ru" ] = assert( (loadstring or load)( "local s = require('say')\
 \
@@ -1689,7 +1689,7 @@ s:set(\"assertion.truthy.negative\", \"Ожидали не true, но значн
 \
 s:set(\"assertion.falsy.positive\", \"Ожидали false, но значние оказалось:\\n%s\")\
 s:set(\"assertion.falsy.negative\", \"Ожидали не false, но значние оказалось:\\n%s\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/languages/ru.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/languages/ru.lua" ) )
 
 package.preload[ "luassert.languages.ua" ] = assert( (loadstring or load)( "local s = require('say')\
 \
@@ -1712,7 +1712,7 @@ s:set(\"assertion.truthy.negative\", \"Очікували не true, проте 
 \
 s:set(\"assertion.falsy.positive\", \"Очікували false, проте значння виявилось:\\n%s\")\
 s:set(\"assertion.falsy.negative\", \"Очікували не false, проте значння виявилось:\\n%s\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/languages/ua.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/languages/ua.lua" ) )
 
 package.preload[ "luassert.languages.zh" ] = assert( (loadstring or load)( "local s = require('say')\
 \
@@ -1745,7 +1745,7 @@ s:set(\"assertion.called_with.negative\", \"希望有参数的调用函数\")\
 -- errors\
 s:set(\"assertion.internal.argtolittle\", \"函数'%s'需要最少%s个参数, 实际有%s个参数\\n\")\
 s:set(\"assertion.internal.badargtype\", \"bad argument #%s: 函数'%s'需要一个%s作为参数, 实际为: %s\\n\")\
-", '@'.."/usr/local/share/lua/5.3/luassert/languages/zh.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/languages/zh.lua" ) )
 
 package.preload[ "luassert.match" ] = assert( (loadstring or load)( "local namespace = require 'luassert.namespaces'\
 local util = require 'luassert.util'\
@@ -1827,12 +1827,12 @@ local mt = {\
 }\
 \
 return setmetatable(match, mt)\
-", '@'.."/usr/local/share/lua/5.3/luassert/match.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/match.lua" ) )
 
 package.preload[ "luassert.matchers" ] = assert( (loadstring or load)( "-- load basic machers\
 require('luassert.matchers.core')\
 require('luassert.matchers.composite')\
-", '@'.."/usr/local/share/lua/5.3/luassert/matchers/init.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/matchers/init.lua" ) )
 
 package.preload[ "luassert.matchers.composite" ] = assert( (loadstring or load)( "local assert = require('luassert.assert')\
 local match = require ('luassert.match')\
@@ -1895,7 +1895,7 @@ end\
 assert:register(\"matcher\", \"none_of\", none)\
 assert:register(\"matcher\", \"any_of\", any)\
 assert:register(\"matcher\", \"all_of\", all)\
-", '@'.."/usr/local/share/lua/5.3/luassert/matchers/composite.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/matchers/composite.lua" ) )
 
 package.preload[ "luassert.matchers.core" ] = assert( (loadstring or load)( "-- module will return the list of matchers, and registers matchers with the main assert engine\
 \
@@ -2071,7 +2071,7 @@ assert:register(\"matcher\", \"equal\", equals)\
 assert:register(\"matcher\", \"unique\", unique)\
 assert:register(\"matcher\", \"truthy\", truthy)\
 assert:register(\"matcher\", \"falsy\", falsy)\
-", '@'.."/usr/local/share/lua/5.3/luassert/matchers/core.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/matchers/core.lua" ) )
 
 package.preload[ "luassert.mock" ] = assert( (loadstring or load)( "-- module will return a mock module table, and will not register any assertions\
 local spy = require 'luassert.spy'\
@@ -2134,7 +2134,7 @@ return setmetatable(mock, {\
     return mock.new(...)\
   end\
 })\
-", '@'.."/usr/local/share/lua/5.3/luassert/mock.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/mock.lua" ) )
 
 package.preload[ "luassert.modifiers" ] = assert( (loadstring or load)( "-- module will not return anything, only register assertions/modifiers with the main assert engine\
 local assert = require('luassert.assert')\
@@ -2155,11 +2155,11 @@ assert:register(\"modifier\", \"has\", is)\
 assert:register(\"modifier\", \"does\", is)\
 assert:register(\"modifier\", \"not\", is_not)\
 assert:register(\"modifier\", \"no\", is_not)\
-", '@'.."/usr/local/share/lua/5.3/luassert/modifiers.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/modifiers.lua" ) )
 
 package.preload[ "luassert.namespaces" ] = assert( (loadstring or load)( "-- stores the list of namespaces\
 return {}\
-", '@'.."/usr/local/share/lua/5.3/luassert/namespaces.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/namespaces.lua" ) )
 
 package.preload[ "luassert.spy" ] = assert( (loadstring or load)( "-- module will return spy table, and register its assertions with the main assert engine\
 local assert = require('luassert.assert')\
@@ -2332,7 +2332,7 @@ return setmetatable(spy, {\
     return spy.new(...)\
   end\
 })\
-", '@'.."/usr/local/share/lua/5.3/luassert/spy.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/spy.lua" ) )
 
 package.preload[ "luassert.state" ] = assert( (loadstring or load)( "-- maintains a state of the assert engine in a linked-list fashion\
 -- records; formatters, parameters, spies and stubs\
@@ -2462,7 +2462,7 @@ end\
 state.snapshot()  -- create initial state\
 \
 return state\
-", '@'.."/usr/local/share/lua/5.3/luassert/state.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/state.lua" ) )
 
 package.preload[ "luassert.stub" ] = assert( (loadstring or load)( "-- module will return a stub module table\
 local assert = require 'luassert.assert'\
@@ -2575,7 +2575,7 @@ return setmetatable(stub, {\
     return stub.new(...)\
   end\
 })\
-", '@'.."/usr/local/share/lua/5.3/luassert/stub.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/stub.lua" ) )
 
 package.preload[ "luassert.util" ] = assert( (loadstring or load)( "local util = {}\
 function util.deepcompare(t1,t2,ignore_mt,cycles,thresh1,thresh2)\
@@ -2863,7 +2863,7 @@ function util.extract_keys(nspace, tokens)\
 end\
 \
 return util\
-", '@'.."/usr/local/share/lua/5.3/luassert/util.lua" ) )
+", '@'.."vendor/share/lua/5.3/luassert/util.lua" ) )
 
 package.preload[ "say" ] = assert( (loadstring or load)( "local unpack = table.unpack or unpack\
 \
@@ -2930,7 +2930,7 @@ s:set_namespace('en')\
 s._registry = registry\
 \
 return setmetatable(s, __meta)\
-", '@'.."/usr/local/share/lua/5.3/say/init.lua" ) )
+", '@'.."vendor/share/lua/5.3/say/init.lua" ) )
 
 assert( (loadstring or load)( "require \"lua-string\"\
 inspect = require \"inspect\"\
