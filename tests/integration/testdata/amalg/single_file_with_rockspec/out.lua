@@ -332,7 +332,7 @@ setmetatable(inspect, { __call = function(_, ...) return inspect.inspect(...) en
 \
 return inspect\
 \
-", '@'.."/usr/local/share/lua/5.3/inspect.lua" ) )
+", '@'.."vendor/share/lua/5.3/inspect.lua" ) )
 
 package.preload[ "lua-string" ] = assert( (loadstring or load)( "local boolvalues = {\13\
 \9[\"1\"] = \"0\";\13\
@@ -620,7 +620,7 @@ function string:totable()\13\
 \9end\13\
 \9return result\13\
 end\13\
-", '@'.."/usr/local/share/lua/5.3/lua-string/init.lua" ) )
+", '@'.."vendor/share/lua/5.3/lua-string/init.lua" ) )
 
 assert( (loadstring or load)( "require \"lua-string\"\
 inspect = require \"inspect\"\

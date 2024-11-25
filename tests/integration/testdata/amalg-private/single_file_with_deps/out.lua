@@ -332,7 +332,7 @@ setmetatable(inspect, { __call = function(_, ...) return inspect.inspect(...) en
 \
 return inspect\
 \
-", '@'.."/usr/local/share/lua/5.3/inspect.lua" ) )
+", '@'.."vendor/share/lua/5.3/inspect.lua" ) )
 
 assert( (loadstring or load)( "inspect = require \"inspect\"\
 \
