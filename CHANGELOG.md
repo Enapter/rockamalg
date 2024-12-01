@@ -1,8 +1,12 @@
+# 1.0.0 (December 1, 2024)
+* Remove cache mode.
+* Support vendored dependency.
+
 # 0.12.1 (May 8, 2023)
-* Fix cache usage
+* Fix cache usage.
 
 # 0.12.0 (April 19, 2023)
-* Add healthcheck
+* Add healthcheck.
 
 # 0.11.0 (April 11, 2023)
 * Split isolate and cache features.
