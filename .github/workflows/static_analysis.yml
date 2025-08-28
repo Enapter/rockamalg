@@ -1,0 +1,39 @@
+name: Security [SAST Scan]
+
+env:
+  REPORT_NAME: static-analysis-report.json
+
+on: [push, pull_request]
+
+jobs:
+  sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep SAST scan
+        run: semgrep --config auto --json --output "${{ env.REPORT_NAME }}" || true
+      
+      - name: Check for SAST issues
+        run: |
+          issues=$(jq '.results | length' "${{ env.REPORT_NAME }}")
+          if [ "$issues" -gt 0 ]; then
+            echo "::error::Found $issues SAST issues in code (see "${{ env.REPORT_NAME }}")"
+          fi
+
+      - name: Upload SAST report (private)
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-analysis-report
+          path: "${{ env.REPORT_NAME }}"
+          retention-days: 30
+
+      # - name: Send SAST report
+      #   run: |
+      #     curl -X POST \
+      #       -H "Content-Type: application/json" \
+      #       -d @"${{ env.REPORT_NAME }}" \
+      #       "${{ secrets.WEBHOOK_URL }}"

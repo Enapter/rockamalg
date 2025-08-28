@@ -1,0 +1,67 @@
+name: Security [Dependency Scan]
+
+env:
+  DEPENDENCY_SCANNING_REPORT_NAME: dependency-scanning-report.json
+  SBOM_REPORT_NAME: spdx-sbom-dependency-scan.json
+
+on: [push, pull_request]
+
+jobs:
+  deps-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependency scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scanners: vuln
+          format: cyclonedx
+          output: "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}"
+          exit-code: 0
+    
+      - name: Check for vulnerabilities
+        run: |
+          vulns=$(jq '.Results[].Vulnerabilities | length' "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}" | awk '{s+=$1} END {print s}')
+          if [ "$vulns" -gt 0 ]; then
+            echo "::error::Found $vulns vulnerabilities in dependencies (see "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}")"
+          fi
+    
+      - name: Upload reports (private)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-scanning-report
+          path: "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}"
+          retention-days: 30
+
+    #   - name: Send report to webhook
+    #     run: |
+    #       curl -X POST \
+    #         -H "Content-Type: application/json" \
+    #         -d @"${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}" \
+    #         "${{ secrets.WEBHOOK_URL }}"
+
+      - name: Generate SBOM (SPDX)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          format: spdx-json
+          output: "${{ env.SBOM_REPORT_NAME }}"
+
+      - name: Upload SBOM (private)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: spdx-sbom-dependency-scan
+          path: "${{ env.SBOM_REPORT_NAME }}"
+          retention-days: 30
+
+    #   - name: Send SBOM to webhook
+    #     if: startsWith(github.ref, 'refs/tags/')
+    #     run: |
+    #       curl -X POST \
+    #         -H "Content-Type: application/json" \
+    #         -d @"${{ env.SBOM_REPORT_NAME }}" \
+    #         "${{ secrets.WEBHOOK_URL }}"

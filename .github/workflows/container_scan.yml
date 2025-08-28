@@ -1,0 +1,71 @@
+name: Security [Container Image Scan]
+
+env:
+  IMAGE_NAME: app:${{ github.sha }}
+  IMAGE_REPORT: container-scanning-report.json
+  IMAGE_SBOM: spdx-sbom-container-scan.json
+
+on: [push, pull_request]
+
+jobs:
+  image-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t "${{ env.IMAGE_NAME }}" .
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: "${{ env.IMAGE_NAME }}"
+          scanners: vuln
+          format: cyclonedx
+          output: "${{ env.IMAGE_REPORT }}"
+          exit-code: 0
+
+      - name: Check for image vulnerabilities
+        run: |
+          vulns=$(jq '.Results[].Vulnerabilities | length' ${{ env.IMAGE_REPORT }} | awk '{s+=$1} END {print s}')
+          if [ "$vulns" -gt 0 ]; then
+            echo "::error::Found $vulns vulnerabilities in Docker image ${{ env.IMAGE_NAME }} (see ${{ env.IMAGE_REPORT }})"
+          fi
+
+      - name: Upload image scan report (private)
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-scan-report
+          path: "${{ env.IMAGE_REPORT }}"
+          retention-days: 30
+
+    #   - name: Send image scan report
+    #     run: |
+    #       curl -X POST \
+    #         -H "Content-Type: application/json" \
+    #         -d @"${{ env.IMAGE_REPORT }}" \
+    #         "${{ secrets.WEBHOOK_URL }}"
+
+      - name: Generate SBOM (SPDX)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: "${{ env.IMAGE_NAME }}"
+          format: spdx-json
+          output: "${{ env.IMAGE_SBOM }}"
+
+      - name: Upload SBOM (private)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: spdx-sbom-container-scan
+          path: "${{ env.IMAGE_SBOM }}"
+          retention-days: 30
+
+    #   - name: Send SBOM to webhook
+    #     if: startsWith(github.ref, 'refs/tags/')
+    #     run: |
+    #       curl -X POST \
+    #         -H "Content-Type: application/json" \
+    #         -d @"${{ env.IMAGE_SBOM }}" \
+    #         "${{ secrets.WEBHOOK_URL }}"
