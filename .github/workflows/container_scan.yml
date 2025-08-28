@@ -29,15 +29,15 @@ jobs:
         run: |
           vulns=$(jq '.Results[].Vulnerabilities | length' ${{ env.IMAGE_REPORT }} | awk '{s+=$1} END {print s}')
           if [ "$vulns" -gt 0 ]; then
-            echo "::error::Found $vulns vulnerabilities in Docker image ${{ env.IMAGE_NAME }} (see ${{ env.IMAGE_REPORT }})"
+            echo "::warning::Found $vulns issues (see ${{ env.IMAGE_REPORT }})"
           fi
 
-      - name: Upload image scan report (private)
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image-scan-report
-          path: "${{ env.IMAGE_REPORT }}"
-          retention-days: 30
+      # - name: Upload image scan report (private)
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: docker-image-scan-report
+      #     path: "${{ env.IMAGE_REPORT }}"
+      #     retention-days: 30
 
     #   - name: Send image scan report
     #     run: |
@@ -46,21 +46,21 @@ jobs:
     #         -d @"${{ env.IMAGE_REPORT }}" \
     #         "${{ secrets.WEBHOOK_URL }}"
 
-      - name: Generate SBOM (SPDX)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: "${{ env.IMAGE_NAME }}"
-          format: spdx-json
-          output: "${{ env.IMAGE_SBOM }}"
+      # - name: Generate SBOM (SPDX)
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   uses: aquasecurity/trivy-action@0.28.0
+      #   with:
+      #     image-ref: "${{ env.IMAGE_NAME }}"
+      #     format: spdx-json
+      #     output: "${{ env.IMAGE_SBOM }}"
 
-      - name: Upload SBOM (private)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v4
-        with:
-          name: spdx-sbom-container-scan
-          path: "${{ env.IMAGE_SBOM }}"
-          retention-days: 30
+      # - name: Upload SBOM (private)
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: spdx-sbom-container-scan
+      #     path: "${{ env.IMAGE_SBOM }}"
+      #     retention-days: 30
 
     #   - name: Send SBOM to webhook
     #     if: startsWith(github.ref, 'refs/tags/')

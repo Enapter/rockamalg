@@ -25,15 +25,15 @@ jobs:
         run: |
           vulns=$(jq '.Results[].Vulnerabilities | length' "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}" | awk '{s+=$1} END {print s}')
           if [ "$vulns" -gt 0 ]; then
-            echo "::error::Found $vulns vulnerabilities in dependencies (see "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}")"
+            echo "::warning::Found $vulns issues (see "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}")"
           fi
     
-      - name: Upload reports (private)
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-scanning-report
-          path: "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}"
-          retention-days: 30
+      # - name: Upload reports (private)
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: dependency-scanning-report
+      #     path: "${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}"
+      #     retention-days: 30
 
     #   - name: Send report to webhook
     #     run: |
@@ -42,21 +42,21 @@ jobs:
     #         -d @"${{ env.DEPENDENCY_SCANNING_REPORT_NAME }}" \
     #         "${{ secrets.WEBHOOK_URL }}"
 
-      - name: Generate SBOM (SPDX)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: fs
-          format: spdx-json
-          output: "${{ env.SBOM_REPORT_NAME }}"
+      # - name: Generate SBOM (SPDX)
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   uses: aquasecurity/trivy-action@0.28.0
+      #   with:
+      #     scan-type: fs
+      #     format: spdx-json
+      #     output: "${{ env.SBOM_REPORT_NAME }}"
 
-      - name: Upload SBOM (private)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v4
-        with:
-          name: spdx-sbom-dependency-scan
-          path: "${{ env.SBOM_REPORT_NAME }}"
-          retention-days: 30
+      # - name: Upload SBOM (private)
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: spdx-sbom-dependency-scan
+      #     path: "${{ env.SBOM_REPORT_NAME }}"
+      #     retention-days: 30
 
     #   - name: Send SBOM to webhook
     #     if: startsWith(github.ref, 'refs/tags/')

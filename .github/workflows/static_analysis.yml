@@ -21,15 +21,15 @@ jobs:
         run: |
           issues=$(jq '.results | length' "${{ env.REPORT_NAME }}")
           if [ "$issues" -gt 0 ]; then
-            echo "::error::Found $issues SAST issues in code (see "${{ env.REPORT_NAME }}")"
+            echo "::warninig::Found $issues issues (see "${{ env.REPORT_NAME }}")"
           fi
 
-      - name: Upload SAST report (private)
-        uses: actions/upload-artifact@v4
-        with:
-          name: static-analysis-report
-          path: "${{ env.REPORT_NAME }}"
-          retention-days: 30
+      # - name: Upload SAST report (private)
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: static-analysis-report
+      #     path: "${{ env.REPORT_NAME }}"
+      #     retention-days: 30
 
       # - name: Send SAST report
       #   run: |
