@@ -146,20 +146,22 @@ func runServerAndConnect(t *testing.T, port int, rt rockstype) rockamalgrpc.Rock
 	t.Helper()
 
 	args := []string{"run", "--rm", "--pull", "never", "--detach", "-p", fmt.Sprintf("%d:9090", port)}
-	if rt == privateRocks {
+	switch rt {
+	case privateRocks:
 		curdir, err := os.Getwd()
 		require.NoError(t, err)
 
 		args = append(args,
 			"-v", filepath.Join(curdir, "testdata/rocks")+":/opt/rocks",
 		)
-	} else if rt == devRocksTest {
+	case devRocksTest:
 		curdir, err := os.Getwd()
 		require.NoError(t, err)
 
 		args = append(args,
 			"-v", filepath.Join(curdir, "testdata/amalg-dev/luarocks")+":/usr/local/bin/luarocks",
 		)
+	case vendoredRocks, publicRocks:
 	}
 
 	args = append(args, "enapter/rockamalg", "server", "-l", "0.0.0.0:9090", "-r", "1s")
@@ -176,7 +178,7 @@ func runServerAndConnect(t *testing.T, port int, rt rockstype) rockamalgrpc.Rock
 		t.Logf("rockamalg logs: %s", execDockerCommand(t, "logs", containerID))
 	})
 
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		fmt.Sprintf("127.0.0.1:%d", port),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
