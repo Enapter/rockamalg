@@ -33,7 +33,7 @@ func run() error {
 
 	healthcheckHost := net.JoinHostPort("127.0.0.1", port)
 
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		healthcheckHost,
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

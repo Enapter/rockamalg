@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine3.20 AS builder
+FROM golang:1.25-alpine3.22 AS builder
 
 RUN apk add --no-cache git bash
 
@@ -7,7 +7,7 @@ COPY . .
 RUN ./build.sh rockamalg
 RUN ./build.sh healthcheck
 
-FROM alpine:3.20
+FROM alpine:3.22
 
 WORKDIR /app
 
