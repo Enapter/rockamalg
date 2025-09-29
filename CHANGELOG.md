@@ -1,3 +1,6 @@
+# 1.0.2 (September 29, 2025)
+* Security fixes.
+
 # 1.0.0 (December 1, 2024)
 * Remove cache mode.
 * Support vendored dependency.
